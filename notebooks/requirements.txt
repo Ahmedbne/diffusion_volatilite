@@ -1,0 +1,5 @@
+# Démonstrateur + notebook
+-r ../app/requirements.txt
+matplotlib>=3.8
+jupyterlab>=4.0
+ipykernel>=6.29
