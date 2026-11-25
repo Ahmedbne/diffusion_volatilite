@@ -1,71 +1,68 @@
 import streamlit as st
 
+import calcul as K
 import core as c
 import theorie as T
 
-c.hero("Démonstrateur mathématique",
+c.hero("00", "Démonstrateur mathématique · École Centrale Casablanca",
        "Diffusion conditionnelle et volatilité",
-       "Un modèle de diffusion apprend à remonter une équation différentielle stochastique qui transforme les données en "
-       "bruit gaussien. Conditionné par ce qui est observé, il génère ce qui ne l'est pas : les rendements à venir, ou ceux "
-       "qui manquent quand des prix font défaut. Ce démonstrateur suit le rapport pas à pas : chaque résultat y est "
-       "calculé, simulé ou mesuré sous vos yeux, et chaque figure annonce sa nature.",
-       "Panel I : S&P 500, Euro Stoxx 50, FTSE 100 · 2007–2026 · modèle A   |   Panel II : 8 actifs · 2010–2026 · modèle B")
+       "Un modèle de diffusion génère ce que l'on n'observe pas, jours à venir ou prix manquants, en remontant une équation qui transforme les données en bruit. Chaque résultat est ici calculé, simulé ou mesuré, et chaque figure annonce sa nature.",
+       "Panel I · S&P 500, Euro Stoxx 50, FTSE 100 · 2007–2026 · modèle A  /  Panel II · 8 actifs · 2010–2026 · modèle B")
 
-q, cs = T.quad_schedule(), T.cosine_schedule()
+c.clair("Un modèle génératif, de la famille de ceux qui produisent des images, décrit-il le risque des marchés mieux qu'un GARCH ?",
+        "Construit avec soin, il fait jeu égal avec les meilleurs GARCH et gagne sur la trajectoire de dix jours. Construit selon la recette d'origine, il fait moins bien.",
+        f"Il coûte environ {c.sci(K.per_scenario('A') / K.ref_per_scenario('GJR-t'), 0)} fois plus de calcul par scénario. Pour la perte de demain, le GARCH suffit ; le génératif sert aux trajectoires, aux portefeuilles, aux trous.")
+
 cols = st.columns(4)
 with cols[0]:
-    c.tile(c.fr(T.gaussian_output_std(q, "ddpm"), 4), "écart-type de sortie de la règle d'origine, calendrier quad, "
-           "débruiteur parfait, données N(0,1)", "théorème : forme fermée", False)
+    c.tile("= GARCH", "modèle A face à GARCH-t, GJR-t, FHS : 0 écart significatif sur 36 tests (4 scores classiques)", "parité · panel I", None)
 with cols[1]:
-    c.tile("= GARCH", "modèle A face à GARCH-t, GJR-t, FHS : aucun des 36 tests de Diebold-Mariano sur les scores "
-           "marginaux n'est significatif", "parité, panel I", None)
+    c.tile("−3 à −8 %", "CRPS de la volatilité réalisée sur 10 jours, face à la meilleure référence",
+           "l'avantage est sur la trajectoire", True)
 with cols[2]:
-    c.tile("+0,0048", "écart de CRPS modèle B − GARCH, IC 95 % [+0,0015 ; +0,0083]", "B moins bon, panel II", False)
+    c.tile("+0,0048", "CRPS modèle B − GARCH, IC 95 % [+0,0015 ; +0,0083]", "B moins bon · panel II",
+           False)
 with cols[3]:
-    c.tile("19 vs 6", "dépassements de la VaR 1 % d'un portefeuille : GJR indépendants vs GJR-CCC, mêmes marges "
-           "(6,8 attendus)", "les marges ne suffisent pas", None)
+    c.tile(c.fr(T.gaussian_output_std(T.quad_schedule(), "ddpm"), 3), "écart-type produit par le schéma de B avec un réseau parfait (vrai : 1)", "théorème : forme fermée", False)
 
-c.section("LE FIL", "Une chaîne de résultats, de l'EDS au verdict",
-          "Chaque maillon est une page. Les numéros renvoient au rapport.")
-r = st.columns(3)
-items = [
-    ("I · 2–3", "Le problème et ses références", "Prévoir et imputer sont un même problème de génération conditionnelle. "
-     f"Un prix manquant impose une somme (prop. {c.ref('prop-prix')}) ; le krigeage la respecte exactement. GARCH : retour à la moyenne, "
-     "équivariance d'échelle, mêmes marges pour GJR et GJR-CCC."),
-    ("II · 4", "L'EDS et le score", "L'EDS à variance préservée détruit toute loi ; l'EDS inverse et l'EDO de flot la "
-     "reconstruisent si l'on connaît le score, qui s'apprend par moindres carrés (Tweedie). ε, x₀ et v sont des rotations."),
-    ("II · 5", "Les biais de dispersion", f"Cas gaussien : déficit fermé de la règle d'origine (th. {c.ref('thm-deficit')}), contraction de DDIM "
-     f"(prop. {c.ref('prop-ddim')}), dilatation d'Euler-Maruyama (prop. {c.ref('prop-em')}). Le nombre de pas est un paramètre de calibration."),
+c.read([("Modèle A", "parité avec GARCH-t, GJR-t et FHS sur la loi de chaque jour ; meilleur sur la trajectoire de dix jours."),
+        ("Modèle B", "moins bon que GARCH, écart établi ; intervalles trop courts, comme le prédit son schéma."),
+        ("Imputation", "l'information utilisée (somme connue, autres marchés du même jour) fait le classement, plus que la méthode."),
+        ("Loi jointe", "les scores marché par marché ne la voient pas ; la VaR d'un portefeuille, si."),
+        ("Coût", f"{c.sci(K.per_scenario('A'), 1)} opérations par scénario pour A, ≈ {c.big(K.ref_per_scenario('GJR-t'))} pour un GJR-t.")],
+       "Le verdict")
+
+c.section("Sommaire", "Quinze planches, une question chacune",
+          "Chaque planche répond à une question précise. Commencez par la carte de l'étude si vous découvrez le sujet ; "
+          "allez directement aux résultats si vous connaissez les GARCH.")
+TOC = [
+    ("01", "carte", "Méthode", "Qu'a-t-on fait exactement, dans quel ordre, et comment juge-t-on ?"),
+    ("02", "probleme", "Le problème", "Pourquoi prévoir et combler un trou sont-ils le même problème ?"),
+    ("03", "volatilite", "Volatilité", "Que sait déjà un GARCH, et pourquoi est-il si dur à battre ?"),
+    ("04", "bruitage", "Bruitage", "Comment transforme-t-on des données de marché en bruit pur ?"),
+    ("05", "score", "Score", "Que doit apprendre le réseau pour défaire ce bruit ?"),
+    ("06", "remontee", "Remontée", "Comment génère-t-on, et qu'est-ce qui peut déformer le résultat ?"),
+    ("07", "dispersion", "Dispersion", "De combien un schéma rapide rétrécit-il le risque ? Calcul exact."),
+    ("08", "evaluation", "Juger", "Comment noter une prévision qui est une loi, pas un nombre ?"),
+    ("09", "prevision", "Prévision", "Le modèle prévoit-il mieux que GARCH ?"),
+    ("10", "imputation", "Imputation", "Comble-t-il mieux les prix manquants ?"),
+    ("11", "jointe", "Loi jointe", "Pourquoi deux modèles aux mêmes notes donnent-ils des VaR opposées ?"),
+    ("12", "controle", "Contrôles", "Qu'apporte chaque choix de construction ? Que coûte d'apprendre ?"),
+    ("13", "cout", "Coût", "Combien de calcul pour un scénario, une étude, un apprentissage ?"),
+    ("14", "discussion", "Synthèse", "Pourquoi le modèle A réussit-il là où le modèle B échoue ?"),
 ]
-for col, it in zip(r, items):
-    with col:
-        c.card(*it)
-st.write("")
-r = st.columns(3)
-items = [
-    ("III · 7", "Juger une loi", "Le CRPS est propre mais plat en l'échelle : une erreur de 6 % d'écart-type ne coûte "
-     f"que 0,09 % (prop. {c.ref('prop-echelle_crps')}). Quantiles d'un ensemble : rang p(M+1)."),
-    ("IV · 9–12", "Résultats", "A égale les GARCH et les dépasse sur la trajectoire ; B fait moins bien. En imputation, "
-     "l'information (somme, même jour) décide. La loi jointe change la VaR d'un facteur trois."),
-    ("V · 13", "Pourquoi A et pas B", "Deux défauts distincts : la calibration de B s'explique par son schéma (théorème) ; "
-     f"son CRPS, non (prop. {c.ref('prop-echelle_crps')}), mais par l'absence d'information de niveau (ablation)."),
-]
-for col, it in zip(r, items):
-    with col:
-        c.card(*it)
+for row in range(0, len(TOC), 3):
+    cs = st.columns(3)
+    for col, (n, f, t, q) in zip(cs, TOC[row:row + 3]):
+        with col:
+            c.card(n, t, q)
+            st.page_link(f"chapitres/{f}.py", label="Ouvrir la planche →")
 
-c.section("LIRE CE DÉMONSTRATEUR", "Quatre natures de résultats", "")
-st.markdown("""
-<div class="d-why">Chaque figure porte un badge.
-<span class="d-badge b-ana">analytique</span> : valeur exacte, tirée d'une formule ou d'une récurrence démontrée dans le
-rapport, sans aléa.
-<span class="d-badge b-num">numérique</span> : simulation contrôlée, où la vérité est connue (score exact, modèle connu).
-<span class="d-badge b-ill">illustration</span> : exemple construit pour faire comprendre un mécanisme ; il ne prouve rien.
-<span class="d-badge b-emp">empirique</span> : résultat mesuré sur les données de marché du test, tel qu'il figure dans le
-rapport ; rien n'est recalculé sur le test.</div>""", unsafe_allow_html=True)
-
-c.read("<b>Le verdict en une phrase.</b> Un modèle de diffusion qui respecte la symétrie d'échelle des rendements, reçoit "
-       "l'information de niveau de volatilité et génère avec un schéma fidèle égale les meilleurs GARCH sur les lois "
-       "marginales et les dépasse sur la cohérence des trajectoires ; construit selon la recette d'origine, il fait moins "
-       "bien. Les scores marginaux, eux, sont aveugles à la loi jointe, qui est ce qui distingue un modèle génératif.")
+c.section("Lire", "Quatre natures de résultats",
+          "Chaque figure porte un glyphe et un mot. Ils disent jusqu'où on peut croire ce qu'elle montre.")
+g = st.columns(4)
+for col, k in zip(g, ("analytique", "numerique", "illustration", "empirique")):
+    glyph, word, gloss = c.BADGES[k]
+    with col:
+        c.tile(f"{glyph} {word}", gloss, k.replace("numerique", "numérique"), None)
 c.foot("Diffusion conditionnelle et volatilité · École Centrale Casablanca · A. Bounadar, S. Yousfi, A. Ktaib, Y. Chaoub.")

@@ -6,11 +6,13 @@ import streamlit as st
 import core as c
 import theorie as T
 
-c.hero("IV · Résultats", "Expériences contrôlées : isoler les mécanismes",
-       "Quatre expériences où un seul facteur varie : le schéma sur un réseau entraîné, chaque choix de construction du "
-       "modèle A, sa capacité à reproduire les faits stylisés, et son coût quand la vérité est connue.",
+c.hero("12", "IV · Résultats", "Expériences contrôlées : isoler les mécanismes",
+       'Quatre expériences où un seul facteur varie : le schéma, chaque choix de construction, les faits stylisés, une vérité connue.',
        f"Rapport, chapitre 12 · figures {c.ref('fig-reseau')} et {c.ref('fig-fidelite')}, tableaux {c.ref('tab-ablation')} "
        f"et {c.ref('tab-simulation')}")
+c.clair("Qu'est-ce qui fait la performance du modèle A, et combien coûte le fait d'apprendre au lieu de supposer ?",
+        "Prédire la vitesse plutôt que le bruit est décisif : sinon le CRPS double presque. Donner au réseau le niveau de volatilité compte (+1,2 %). Quand les données sont vraiment GARCH, apprendre coûte environ 1 % de CRPS face à l'oracle.",
+        "Ce pour cent éclaire les résultats réels : sur les vrais indices, le modèle A n'est pas derrière les GARCH. Les données contiennent donc une structure que le GARCH ne décrit pas.")
 
 c.section(c.lab("sec-choix_schema"), "Les schémas sur le réseau entraîné du modèle A",
           "Validation du panel I : 75 origines de prévision et 30 fenêtres d'imputation par indice.")
@@ -56,10 +58,9 @@ with g2:
                                line=dict(color=col, width=2)))
     h.update_layout(xaxis_type="log", xaxis_title="évaluations", yaxis_title="excès de CRPS (%)", xaxis=dict(tickvals=[5, 10, 20, 50]))
     c.plot(h, 280)
-c.read(f"<b>Lecture.</b> La contraction prédite est là : DDIM perd 33, 16, 7 et 2 % d'écart-type à 5, 10, 20 et 50 pas, comme "
-       f"la loi jouet. Le CRPS, lui, la voit à peine (moins de 0,5 % d'écart à partir de 20 pas) : c'est la proposition "
-       f"{c.ref('prop-echelle_crps')}. D'où la règle : choisir le schéma comme une méthode numérique, pour sa précision — "
-       "DPM-Solver++(2M) à 20 évaluations.")
+c.read([("Contraction prédite", "observée : DDIM perd 33, 16, 7 et 2 % d'écart-type à 5, 10, 20 et 50 pas, comme la loi jouet."),
+        ("CRPS", f"la voit à peine : moins de 0,5 % d'écart dès 20 pas (proposition {c.ref('prop-echelle_crps')})."),
+        ("Règle retenue", "choisir le schéma pour sa précision : DPM-Solver++(2M), 20 évaluations.")])
 
 c.section(c.lab("sec-ablation"), "Ce que chaque choix apporte : ablation du modèle A",
           "Une variante par ingrédient retiré, même initialisation aléatoire, même budget, mêmes cas de validation.")
@@ -82,11 +83,10 @@ for col_, name, colr in (("Δ prévision (%)", "prévision", c.BLUE), ("Δ imput
                         customdata=rr[tcol], hovertemplate="%{y}<br>%{x:+.2f} %<br>t = %{customdata:.1f}<extra></extra>"))
 fa.update_layout(barmode="group", xaxis_title="hausse du CRPS (%)")
 c.plot(fa, 330)
-c.read(f"<b>Lecture.</b> Prédire ε au lieu de v double presque le CRPS avec un solveur à 20 pas : c'est l'amplification "
-       f"tan θ de la proposition {c.ref('prop-rotations')}. Les covariables de niveau comptent (+1,2 % en prévision, t = 4,1) : "
-       "sans elles, le réseau ne sait pas si la volatilité présente est haute ou basse, et ne peut pas en déduire son retour "
-       "à la moyenne. La régularisation aussi (+1,2 %, t = 2,3). La normalisation locale et l'attention apportent de petits "
-       "gains, de bon signe mais non établis : la validation ne détecte pas d'écart inférieur à environ 1 %.")
+c.read([("Prédire ε", f"+91 % de CRPS avec un solveur à 20 pas : l'amplification tan θ (proposition {c.ref('prop-rotations')})."),
+        ("Covariables de niveau", "+1,2 % (t = 4,1) : sans elles, le réseau ignore si la volatilité est haute ou basse."),
+        ("Régularisation", "+1,2 % (t = 2,3)."),
+        ("Normalisation locale, attention", "gains de bon signe, non établis : la validation ne détecte pas d'écart inférieur à environ 1 %.")])
 
 c.section(c.lab("sec-fidelite"), "Le modèle reproduit-il les faits stylisés ?",
           "Fenêtres de 64 jours générées sans conditionnement, à partir de la seule volatilité initiale.")
@@ -103,9 +103,8 @@ for src, (lab, colr) in SRC.items():
     ff.add_trace(go.Bar(x=d.Index.str.replace("\\&", "&", regex=False), y=d[stat].astype(float), name=lab, marker_color=colr))
 ff.update_layout(barmode="group")
 c.plot(ff, 320)
-c.read("<b>Lecture.</b> L'effet de levier des fenêtres du modèle A (−0,10 à −0,11) colle à celui des données (−0,09 à −0,12) ; "
-       "le GJR-t n'en reproduit que la moitié, le GARCH symétrique rien. L'asymétrie des rendements standardisés a le bon "
-       "signe pour le modèle A, et le mauvais pour le GJR-t.")
+c.read([("Effet de levier", "A : −0,10 à −0,11 ; données : −0,09 à −0,12 ; GJR-t en reproduit la moitié, GARCH-t rien."),
+        ("Asymétrie", "bon signe pour A, mauvais pour GJR-t.")])
 
 c.section(c.lab("sec-simulation"), "Une expérience à vérité connue",
           "Trois séries simulées par un GARCH(1,1)-t connu ; toute l'étude refaite à l'identique ; deux oracles.")
@@ -130,11 +129,9 @@ with g2:
                           text=[c.fr(v, 2, True) for v in gap], textposition="outside", textfont=dict(color=c.INK_2)))
     fi.update_layout(yaxis_title="écart à l'oracle (%)")
     c.plot(fi, 300)
-c.read("<b>Lecture.</b> Quand les données sont vraiment GARCH, le GARCH estimé est indiscernable de l'oracle, et le modèle A "
-       "paie environ 1 % de CRPS pour ne pas connaître la forme du modèle : c'est son prix d'apprentissage. Sur les vrais "
-       "indices, il est pourtant à égalité avec les GARCH et devant sur la volatilité réalisée, où il est 14 % derrière "
-       "l'oracle en simulation : les données réelles contiennent vraisemblablement, dans l'enchaînement des grandes "
-       "variations, une structure que le GARCH ne décrit pas.")
+c.read([("Vérité GARCH", "le GARCH estimé est indiscernable de l'oracle."),
+        ("Prix d'apprentissage", "A paie environ 1 % de CRPS pour ne pas connaître la forme du modèle, 14 % sur la volatilité réalisée."),
+        ("Sur données réelles", "A est à égalité avec les GARCH et devant sur la volatilité réalisée : les données contiennent vraisemblablement une structure que le GARCH ne décrit pas.")])
 c.foot(f"Analytique : proposition {c.ref('prop-rotations')}, tableau {c.ref('tab-exact')}. Numérique : loi jouet "
        f"(section {c.ref('sec-jouet')}) et données simulées (tableau {c.ref('tab-simulation')}). Empirique : figure "
        f"{c.ref('fig-reseau')}, tableau {c.ref('tab-ablation')}, figure {c.ref('fig-fidelite')}.")

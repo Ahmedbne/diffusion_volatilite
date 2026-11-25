@@ -169,5 +169,9 @@
 "ann-complements": "A",
 "ann-elbo": "A.1",
 "prop-elbo": "A.1",
-"ann-gauss": "A.2"
+"ann-gauss": "A.2",
+"fig-carte": "8.1",
+"sec-cout": "12.5",
+"tab-cout": "12.3",
+"eq-cout": "12.1"
 }

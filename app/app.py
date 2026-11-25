@@ -1,7 +1,7 @@
 """Démonstrateur mathématique : diffusion conditionnelle et volatilité.
 
 Lancer depuis ce dossier :  streamlit run app.py
-(le thème sombre est lu dans .streamlit/config.toml ; depuis un autre dossier, ajouter --theme.base dark)
+(le thème est lu dans .streamlit/config.toml ; depuis un autre dossier, ajouter --theme.base dark)
 """
 from pathlib import Path
 
@@ -11,47 +11,45 @@ HERE = Path(__file__).resolve().parent
 st.set_page_config(page_title="Diffusion conditionnelle et volatilité", page_icon="∂", layout="wide",
                    initial_sidebar_state="expanded")
 
-LOGO = HERE / "donnees" / "logo_ecc.png"
+LOGO = HERE / "donnees" / "logo_ecc_noir.png"
 st.logo(str(LOGO), size="large", icon_image=str(LOGO))
-st.markdown("<style>"
-            "[data-testid='stSidebarLogo'], img[data-testid='stLogo']{height:5.2rem;max-height:5.2rem;width:auto;"
-            "max-width:100%;background:#fff;border-radius:8px;padding:4px}"
-            "[data-testid='stSidebarHeader']{height:auto;padding-top:1rem;padding-bottom:.6rem}"
-            "</style>", unsafe_allow_html=True)
 
 P = HERE / "chapitres"
 pages = {
-    "": [st.Page(P / "accueil.py", title="Vue d'ensemble", icon=":material/functions:", default=True)],
+    "Étude": [
+        st.Page(P / "accueil.py", title="00  Vue d'ensemble", default=True),
+        st.Page(P / "carte.py", title="01  Méthode : la carte de l'étude"),
+    ],
     "I · Le cadre": [
-        st.Page(P / "probleme.py", title="Le problème", icon=":material/grid_on:"),
-        st.Page(P / "volatilite.py", title="Volatilité : GARCH et GJR", icon=":material/show_chart:"),
+        st.Page(P / "probleme.py", title="02  Le problème"),
+        st.Page(P / "volatilite.py", title="03  Volatilité : GARCH et GJR"),
     ],
     "II · La diffusion": [
-        st.Page(P / "bruitage.py", title="L'EDS de bruitage", icon=":material/blur_on:"),
-        st.Page(P / "score.py", title="Score, Tweedie, paramétrisations", icon=":material/explore:"),
-        st.Page(P / "remontee.py", title="Remonter le temps", icon=":material/history:"),
-        st.Page(P / "dispersion.py", title="Biais de dispersion : théorèmes", icon=":material/stacked_line_chart:"),
+        st.Page(P / "bruitage.py", title="04  L'EDS de bruitage"),
+        st.Page(P / "score.py", title="05  Score et Tweedie"),
+        st.Page(P / "remontee.py", title="06  Remonter le temps"),
+        st.Page(P / "dispersion.py", title="07  Biais de dispersion"),
     ],
     "III · Juger": [
-        st.Page(P / "evaluation.py", title="Règles de score", icon=":material/rule:"),
+        st.Page(P / "evaluation.py", title="08  Règles de score"),
     ],
     "IV · Résultats": [
-        st.Page(P / "prevision.py", title="Prévision", icon=":material/trending_up:"),
-        st.Page(P / "imputation.py", title="Imputation et prix manquants", icon=":material/timeline:"),
-        st.Page(P / "jointe.py", title="Loi jointe et VaR", icon=":material/hub:"),
-        st.Page(P / "controle.py", title="Expériences contrôlées", icon=":material/science:"),
+        st.Page(P / "prevision.py", title="09  Prévision"),
+        st.Page(P / "imputation.py", title="10  Imputation et prix manquants"),
+        st.Page(P / "jointe.py", title="11  Loi jointe et VaR"),
+        st.Page(P / "controle.py", title="12  Expériences contrôlées"),
+        st.Page(P / "cout.py", title="13  Coût de calcul"),
     ],
     "V · Synthèse": [
-        st.Page(P / "discussion.py", title="Pourquoi A et pas B", icon=":material/balance:"),
+        st.Page(P / "discussion.py", title="14  Pourquoi A et pas B"),
     ],
 }
 nav = st.navigation(pages, position="sidebar", expanded=True)
 with st.sidebar:
-    st.markdown("<div style='color:#8a8984;font-size:.78rem;line-height:1.5;margin-top:1rem'>"
-                "<span style='font-family:JetBrains Mono,monospace;letter-spacing:.1em'>NATURE DES RÉSULTATS</span><br>"
-                "<span style='color:#8fb6ea'>■</span> analytique : calcul exact ou théorème<br>"
-                "<span style='color:#5ccaa3'>■</span> numérique : simulation contrôlée<br>"
-                "<span style='color:#b5abf2'>■</span> illustration : exemple pédagogique<br>"
-                "<span style='color:#ec9a6e'>■</span> empirique : données de marché<br><br>"
+    st.markdown("<div class='side'>NATURE D'UN RÉSULTAT<br>"
+                "<b>■ exact</b> · formule démontrée<br>"
+                "<b>◆ simulé</b> · vérité connue<br>"
+                "<b>○ exemple</b> · pour comprendre<br>"
+                "<b>● mesuré</b> · données de marché<br><br>"
                 "École Centrale Casablanca · 2026</div>", unsafe_allow_html=True)
 nav.run()

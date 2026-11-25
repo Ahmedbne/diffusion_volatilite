@@ -5,12 +5,13 @@ import streamlit as st
 
 import core as c
 
-c.hero("I · Le cadre", "Générer ce qui est caché",
-       "Une fenêtre de marché, des coordonnées observées, des coordonnées cibles : la prévision cache la fin de la "
-       "fenêtre, l'imputation des morceaux au milieu. Résoudre une tâche, c'est tirer les cibles selon leur loi "
-       "conditionnelle aux observées. Quand c'est un prix qui manque, une contrainte linéaire s'ajoute.",
+c.hero("02", "I · Le cadre", "Générer ce qui est caché",
+       "Prévoir cache la fin d'une fenêtre de marché, imputer cache des morceaux au milieu : dans les deux cas, on tire les cases cachées selon leur loi sachant les cases connues. Un prix manquant ajoute une contrainte linéaire exacte.",
        f"Rapport, chapitre 2 · définition {c.ref('def-tache')}, proposition {c.ref('prop-prix')}, "
        f"lemme {c.ref('lem-krigeage')}, corollaire {c.ref('cor-pont')}")
+c.clair("Prévoir les jours à venir et reconstituer des prix manquants : faut-il deux outils différents ?",
+        "Non. Dans les deux cas, certaines cases d'un tableau de rendements sont connues, d'autres non, et l'on tire les inconnues selon leur loi sachant les connues. Un prix manquant ajoute une contrainte exacte : la somme des rendements du trou.",
+        "Combler un trou par une droite donne une valeur unique, sans incertitude. Respecter la somme et tirer des chemins donne à la fois le bon prix final et l'incertitude au milieu du trou.")
 
 st.latex(r"\text{Résoudre }(\mathcal O,\mathcal T,A,s)\;=\;\text{tirer }M\text{ scénarios de }\;"
          r"p\big(x_{\mathcal T}\ \big|\ x_{\mathcal O},\ A\,x_{\mathcal T}=s,\ \mathcal F\big)")
@@ -103,6 +104,8 @@ with t[1]:
            "σ√(j(n−j)/n)", "bruit Monte-Carlo", None)
 with t[2]:
     c.tile(c.fr(sig * np.sqrt(n / 4), 2) + " %", "écart-type maximal du log-prix, au milieu du trou", "", None)
-c.read("<b>Lecture.</b> Les deux prix connus attachent le chemin : l'incertitude est nulle aux bouts et maximale au milieu. "
-       "Une imputation qui ignore la somme sort de l'hyperplan et produit un prix final faux ; une interpolation reste "
-       "dedans mais n'annonce aucune incertitude. La projection fait les deux à la fois, exactement dans le cas gaussien.")
+c.read([("Aux deux bouts", "incertitude nulle : les prix connus attachent le chemin."),
+        ("Au milieu", "incertitude maximale : écart-type σ√(n/4)."),
+        ("Interpoler", "reste sur l'hyperplan, mais n'annonce aucune incertitude."),
+        ("Ignorer la somme", "sort de l'hyperplan : le prix final est faux."),
+        ("Projeter", "fait les deux, exactement dans le cas gaussien.")])

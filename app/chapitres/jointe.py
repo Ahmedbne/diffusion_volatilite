@@ -6,11 +6,13 @@ from scipy.stats import norm, t as student
 
 import core as c
 
-c.hero("IV · Résultats", "Loi jointe : mêmes marges, VaR opposées",
-       "GJR et GJR-CCC ont exactement la même loi pour chaque marché pris seul ; seule change la dépendance entre marchés "
-       "le même jour. Aucun score marginal ne peut les distinguer. La VaR d'un portefeuille, si.",
+c.hero("11", "IV · Résultats", "Loi jointe : mêmes marges, VaR opposées",
+       "GJR et GJR-CCC ont exactement les mêmes marges ; seule change la dépendance entre marchés. Aucun score marginal ne les distingue ; la VaR d'un portefeuille, si.",
        f"Rapport, chapitre 11 · définition {c.ref('def-ccc')}, propositions {c.ref('prop-ccc')} et {c.ref('prop-aveugle')}, "
        f"tableau {c.ref('tab-jointe')}")
+c.clair("Deux modèles peuvent-ils avoir les mêmes notes et décrire des risques différents ?",
+        "Oui. GJR et GJR-CCC donnent exactement la même loi pour chaque marché ; seul change le lien entre marchés. Sur le test, la VaR à 1 % du portefeuille est dépassée 19 fois avec l'un, 6 fois avec l'autre, pour 6,8 attendues.",
+        "Juger un modèle génératif marché par marché, c'est ignorer ce qui le distingue : la loi jointe.")
 
 R = np.array(c.scores("forecast_ccc_test")["correlation"])
 lj = c.scores("loi_jointe_test")["methods"]
@@ -27,11 +29,11 @@ with left:
     f.update_layout(title="La matrice R de GJR-CCC, estimée sur l'apprentissage")
     c.plot(f, 420)
 with right:
-    st.markdown("**Le modèle, en une ligne**")
+    st.markdown('<div class="stmt">Le modèle, en une ligne</div>', unsafe_allow_html=True)
     st.latex(r"z_{d,t}=\sqrt{\tfrac{\nu_d-2}{\nu_d}}\;F_{\nu_d}^{-1}\!\big(\Phi(g_{d,t})\big),\qquad g_t\sim\mathcal N(0,R)")
     st.markdown("Chaque $g_{d,t}$ est $\\mathcal N(0,1)$, donc $\\Phi(g_{d,t})$ est uniforme et $z_{d,t}$ suit exactement "
                 "la loi de Student de GJR : **les marges ne dépendent pas de R**. Seule la loi jointe change.")
-    st.markdown("**Pourquoi la VaR du portefeuille bouge**")
+    st.markdown('<div class="stmt">Pourquoi la VaR du portefeuille bouge</div>', unsafe_allow_html=True)
     st.latex(r"\operatorname{Var}\Big(\tfrac1D\sum_d z_d\Big)=\frac{1}{D^2}\sum_{d,e}R_{de}")
     one = np.ones(8)
     sd_ind, sd_cor = np.sqrt(8) / 8, np.sqrt(one @ R @ one) / 8
@@ -130,11 +132,9 @@ for col, m in zip(cl, shown):
         f2.update_layout(title=f"{labels[m]} : corrélation des scénarios {c.fr(r, 2)}", xaxis_title=a, yaxis_title=b,
                          xaxis_range=[-5, 5], yaxis_range=[-5, 5])
         c.plot(f2, 360)
-c.take("<b>Lecture.</b> Les deux nuages ont les mêmes projections sur chaque axe : ce sont les marges, que le CRPS juge. "
-       "Seule leur forme diffère. Quand un modèle simule les marchés indépendamment, la baisse de l'un est compensée par "
-       "les autres dans ses scénarios : la loi du portefeuille est trop étroite et sa VaR à 1 % est dépassée trois fois "
-       "trop souvent. Les scores moyens (energy score, CRPS du portefeuille) séparent à peine les deux modèles : la "
-       "dépendance pèse surtout dans les mauvais jours.")
+c.read([("Marges", "identiques : les projections des deux nuages sur chaque axe sont les mêmes, et le CRPS ne juge qu'elles."),
+        ("Marchés simulés indépendamment", "la baisse de l'un est compensée par les autres : loi du portefeuille trop étroite, VaR 1 % dépassée 19 fois pour 6,8 attendues."),
+        ("Scores moyens", "energy score et CRPS du portefeuille séparent à peine les deux modèles : la dépendance pèse dans les mauvais jours.")])
 c.foot(f"Rapport : proposition {c.ref('prop-ccc')} (mêmes marges, variance du portefeuille), proposition "
        f"{c.ref('prop-aveugle')} (aveuglement des scores marginaux), lemme {c.ref('lem-agregat')} (score d'un agrégat), "
        f"figure {c.ref('fig-portefeuille')}.")

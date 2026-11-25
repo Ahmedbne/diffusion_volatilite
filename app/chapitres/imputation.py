@@ -5,11 +5,13 @@ import streamlit as st
 
 import core as c
 
-c.hero("IV · Résultats", "Imputation : l'information prime la flexibilité",
-       "Quand l'information est des deux côtés d'un trou, trois sources comptent : ce qui suit le trou, la somme connue "
-       "d'un segment de prix, et les autres marchés du même jour. Chaque méthode est jugée sur ce qu'elle en tire.",
+c.hero("10", "IV · Résultats", "Imputation : l'information prime la flexibilité",
+       "Autour d'un trou, trois informations comptent : ce qui le suit, la somme connue d'un segment de prix, les autres marchés du même jour. Chaque méthode est jugée sur ce qu'elle en tire.",
        f"Rapport, chapitre 10 · tableaux {c.ref('tab-imp_I')}, {c.ref('tab-imp_II')}, {c.ref('tab-prix_II')} ; "
        f"tableau {c.ref('tab-information')}")
+c.clair("Le modèle de diffusion reconstitue-t-il mieux les données manquantes ?",
+        "Il bat l'interpolation de plus d'un quart et les ponts browniens, et égale la loi exacte d'un GJR. Mais c'est l'information utilisée, la somme connue d'un trou et les autres marchés du même jour, qui fait le classement, plus que la méthode.",
+        "Une méthode simple qui exploite la bonne information bat une méthode flexible qui l'ignore. Avant de changer de modèle, il faut lui donner tout ce que l'on sait.")
 
 c.section(c.lab("sec-imp_I"), "Panel I : des prix manquants sur un indice", "Quatre scénarios, trois indices réunis.")
 ip = c.csv("panel_I/imputation_pooled")
@@ -40,10 +42,9 @@ tbl = tbl.sort_values(["index", "scenario"]).rename(columns={"index": "indice", 
                                                             "BB-local": "A − pont local", "GJR-t": "A − lisseur GJR-t"})
 st.dataframe(tbl, hide_index=True, width="stretch", height=36 * (len(tbl) + 1) + 4)
 st.caption("Statistique de Diebold-Mariano, variance de long terme de Newey-West. Étoiles : ** 5 %, * 10 %.")
-c.read("<b>Lecture.</b> Une loi vaut beaucoup mieux qu'une droite : toutes les méthodes probabilistes battent l'interpolation "
-       "de plus d'un quart. Le modèle A bat le pont local de 0,6 à 2,1 % et égale le lisseur GJR-t, la loi conditionnelle "
-       "exacte d'un modèle économétrique bien spécifié. En erreur absolue, pourtant, la droite reste le meilleur point : "
-       "personne ne prévoit l'écart d'un chemin à la droite.")
+c.read([("Loi contre droite", "toutes les méthodes probabilistes battent l'interpolation de plus d'un quart."),
+        ("Modèle A", "bat le pont local de 0,6 à 2,1 % et égale le lisseur GJR-t, loi exacte d'un GJR bien spécifié."),
+        ("Valeur unique", "en erreur absolue, la droite reste la meilleure : personne ne prévoit l'écart d'un chemin à la droite.")])
 
 c.section(c.lab("sec-imp_II"), "Panel II : des rendements manquants sur huit marchés",
           "Les autres marchés du même jour sont observés : c'est l'information qui décide.")
@@ -62,9 +63,10 @@ for task, lab in (("points", "points isolés"), ("blocks", "blocs de 5 jours")):
     fo.add_vline(x=0, line=dict(color=c.INK, width=1)); fo.update_yaxes(autorange="reversed")
     fo.update_layout(xaxis_title="écart de CRPS (négatif : B meilleur)")
     c.plot(fo, 250)
-c.read("<b>Lecture.</b> Le modèle B bat toutes les méthodes univariées ; il n'est pas distingué de l'EWMA multivarié, une "
-       "simple loi gaussienne conditionnelle qui utilise la même information. Son avantage vient de l'information, pas de "
-       "la diffusion. Ses intervalles couvrent 85 %, moins que ceux de l'EWMA multivarié (87 %).")
+c.read([("Méthodes univariées", "B les bat toutes."),
+        ("EWMA multivarié", "non distingué de B : même information, simple loi gaussienne conditionnelle."),
+        ("Donc", "l'avantage de B vient de l'information, pas de la diffusion."),
+        ("Couverture à 90 %", "85,3 et 85,1 % pour B, 87,6 et 87,0 % pour l'EWMA multivarié.")])
 
 c.section(c.lab("sec-prix_II"), "Panel II : des prix manquants — une échelle d'information", "")
 cmp = c.scores("imputation_prix_test_comparaisons")

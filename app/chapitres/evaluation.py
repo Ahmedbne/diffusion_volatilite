@@ -7,12 +7,13 @@ from scipy.stats import norm
 
 import core as c
 
-c.hero("III · Juger", "Juger une loi quand on n'observe qu'un point",
-       "Une règle de score propre récompense l'honnêteté : aucune prévision ne bat, en espérance, la vraie loi. Le CRPS en est "
-       "une ; mais il est plat en l'échelle, pèse peu les queues, et ses estimateurs comme les quantiles d'un ensemble "
-       "demandent du soin. Trois propriétés, trois expériences.",
+c.hero("08", "III · Juger", "Juger une loi quand on n'observe qu'un point",
+       "Une règle de score propre ne peut être battue, en moyenne, que par la vraie loi. Le CRPS en est une, avec trois limites qu'il faut connaître.",
        f"Rapport, chapitre 7 · propositions {c.ref('prop-crps')}, {c.ref('prop-propre')}, {c.ref('prop-echelle_crps')}, "
        f"{c.ref('prop-fair')}, {c.ref('prop-rangs')}")
+c.clair("Comment noter une prévision qui annonce une loi entière, quand on n'observe qu'une seule réalisation ?",
+        "Avec une règle de score propre, le CRPS, que seule la vraie loi bat en moyenne. Mais il remarque à peine une erreur d'échelle de 6 %, et lire un quantile dans un ensemble de scénarios demande une convention exacte.",
+        "Un score qui ne voit pas un défaut ne prouve pas qu'il n'existe pas : la couverture et la VaR complètent le CRPS.")
 
 st.latex(r"\operatorname{CRPS}(F,y)=\int\big(F(z)-\mathbf 1\{y\le z\}\big)^2dz=\mathbb E|X-y|-\tfrac12\mathbb E|X-X'|"
          r"=2\int_0^1\operatorname{QS}_\alpha\big(F^{-1}(\alpha),y\big)\,d\alpha")
@@ -79,9 +80,9 @@ with t[1]:
 with t[2]:
     c.tile("+" + c.fr(100 * (exp_crps(np.array([0.8]), 0)[0] - 1), 2) + " %", "coût en CRPS d'une erreur d'échelle de 20 %",
            "", None)
-c.read("<b>Lecture.</b> Une erreur d'échelle n'augmente le CRPS qu'au second ordre. Le CRPS ne peut donc pas départager "
-       "des schémas de dispersions voisines, et il ne peut pas expliquer un écart de 0,9 % entre deux modèles par une "
-       "sous-dispersion de 6 %. La couverture et les VaR, elles, réagissent au premier ordre.")
+c.read([("Échelle", "une erreur d'échelle n'augmente le CRPS qu'au second ordre."),
+        ("Conséquence", "le CRPS ne départage pas des dispersions voisines ; il ne peut pas expliquer 0,9 % d'écart par 6 % de sous-dispersion."),
+        ("À regarder aussi", "la couverture et la VaR, qui réagissent au premier ordre.")])
 
 c.section(c.lab("prop-fair"), "Estimer le CRPS à partir de M scénarios", "")
 st.latex(r"\widehat{\operatorname{CRPS}}_{\text{équitable}}=\frac1M\sum_i|X_i-y|-\frac{1}{2M(M-1)}\sum_{i\neq j}|X_i-X_j|,"
@@ -127,6 +128,6 @@ k.add_trace(go.Bar(x=[f"p = {p:.1%}".replace(".", ",") for p in ps], y=np.array(
 k.add_hline(y=1, line=dict(color=c.INK, width=1))
 k.update_layout(barmode="group", yaxis_title="fréquence réelle / p")
 c.plot(k, 320)
-c.read(f"<b>Lecture.</b> Avec M = {M}, la convention par défaut lit la « VaR à 1 % » au rang {c.fr(1 + 0.01 * (M - 1), 2)}"
-       f" : elle est franchie {c.fr(defl[0] / 0.01, 1)} fois trop souvent. La convention p(M+1) est exacte en échantillon "
-       "fini, pour toute loi continue. C'est pourquoi le panel I utilise M = 99 : X₍₁₎ est la VaR à 1 %, X₍₅₎ celle à 5 %.")
+c.read([("Convention par défaut", f"avec M = {M}, la « VaR à 1 % » est lue au rang {c.fr(1 + 0.01 * (M - 1), 2)} et franchie {c.fr(defl[0] / 0.01, 1)} fois trop souvent."),
+        ("Rang p(M + 1)", "exact en échantillon fini, pour toute loi continue."),
+        ("Panel I", "M = 99 : X₍₁₎ est la VaR à 1 %, X₍₅₎ celle à 5 %.")])

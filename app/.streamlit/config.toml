@@ -1,10 +1,23 @@
 [theme]
 base = "dark"
-primaryColor = "#3987e5"
-backgroundColor = "#111215"
-secondaryBackgroundColor = "#17181c"
-textColor = "#ecebe6"
-font = "sans serif"
+primaryColor = "#ece9e0"
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#0c0c0b"
+textColor = "#e6e3da"
+linkColor = "#ece9e0"
+borderColor = "#232321"
+showWidgetBorder = true
+baseRadius = "1px"
+font = "IBM Plex Sans:https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+headingFont = "Newsreader:https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap"
+codeFont = "IBM Plex Mono:https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"
+dataframeHeaderBackgroundColor = "#0c0c0b"
+showSidebarBorder = true
+
+[theme.sidebar]
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#0c0c0b"
+borderColor = "#1a1a19"
 
 [server]
 headless = true

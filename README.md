@@ -96,9 +96,10 @@ diffusion_volatilite/
 │   ├── app.py                  Point d'entrée : navigation entre les pages
 │   ├── core.py                 Thème, composants visuels, chargement des données
 │   ├── theorie.py              Résultats analytiques (calendriers, loi de sortie exacte des échantillonneurs)
+│   ├── calcul.py               Coût de calcul : comptage des opérations, mesures
 │   ├── chapitres/              Une page par étape de l'étude
 │   ├── donnees/                Données de marché et résultats empiriques (CSV, JSON, NPZ)
-│   ├── .streamlit/config.toml  Thème sombre et réglages du serveur
+│   ├── .streamlit/config.toml  Thème noir, polices et réglages du serveur
 │   ├── requirements.txt        Dépendances Python
 │   └── LISEZMOI.md             Notice courte du démonstrateur
 └── notebooks/
@@ -214,35 +215,40 @@ Chaque étape est **recalculée** quand c'est possible. Sinon, on **relit** les 
 
 | # | Étape | Ce que le notebook fait et vérifie |
 |---|---|---|
+| 0 bis | Carte de l'étude | le parcours d'un cas, qui voit quoi en imputation, les règles du protocole |
 | 1 | Données | statistiques descriptives, queues épaisses, autocorrélation de \|r\|, effet de levier, corrélations entre les 8 marchés |
 | 2 | Référence GARCH | estimation **par maximum de vraisemblance** de GARCH-*t* et GJR-*t* sur le S&P 500 ; paramètres et CRPS de test retrouvés |
 | 3 | EDS de bruitage | calendriers *quad* et *cosinus* ; bruitage des rendements réels jusqu'à la loi normale |
 | 4 | Score et Tweedie | formule de Tweedie vérifiée par Monte-Carlo sur une loi à queues épaisses ; paramétrisations ε, x₀, v |
 | 5 | Biais de dispersion | déficit de variance : **forme fermée = récurrence exacte = simulation** (11,3 % et 2,4 %) ; contraction de DDIM, dilatation d'Euler-Maruyama |
 | 6 | Règles de score | CRPS exact et d'ensemble ; l'estimateur naïf favorise les ensembles trop étroits, l'estimateur équitable corrige |
-| 7 | Panel I, modèle A | prévision, 36 tests de Diebold-Mariano, régimes, fidélité, VaR, imputation, ablations |
+| 7 | Panel I, modèle A | prévision, tableau des rencontres (21 tests de Diebold-Mariano par référence), régimes, fidélité, VaR, imputation, ablations |
 | 8 | Panel II, modèle B | prévision et bootstrap, imputation, prix manquants, **loi jointe recalculée sur les scénarios bruts** |
-| 9 | Synthèse | le fil complet et le verdict : pourquoi le modèle A et pas le modèle B |
+| 9 | Coût de calcul | opérations par scénario ; **deux hypothèses vérifiées** (largeur du modèle A bornée par son nombre de paramètres, coût d'un tirage chronométré) ; temps mesurés affines en NFE ; mesure en direct |
+| 10 | Synthèse | le fil complet et le verdict : pourquoi le modèle A et pas le modèle B |
 
 ## Le démonstrateur, page par page
 
-Chaque figure porte un badge qui annonce la nature de ce qu'elle montre :
+Le démonstrateur est organisé en quinze planches numérotées. Chacune s'ouvre sur un bandeau **En clair** (la question,
+ce qu'on trouve, pourquoi ça compte), écrit pour un lecteur non spécialiste, avant le détail rigoureux.
 
-| Badge | Signification |
+Chaque figure annonce la nature de ce qu'elle montre par un glyphe et un mot :
+
+| Marque | Signification |
 |---|---|
-| 🟦 **analytique** | calcul exact ou théorème, recalculé à chaque interaction |
-| 🟩 **numérique** | simulation contrôlée |
-| 🟪 **illustration** | exemple pédagogique |
-| 🟧 **empirique** | résultats sur données de marché |
+| ■ **exact** (analytique) | calcul exact ou théorème, recalculé à chaque interaction |
+| ◆ **simulé** (numérique) | simulation contrôlée, vérité connue |
+| ○ **exemple** (illustration) | exemple pédagogique, ne prouve rien |
+| ● **mesuré** (empirique) | résultats sur données de marché |
 
 | Partie | Pages |
 |---|---|
-| **Vue d'ensemble** | la chaîne de résultats et le verdict |
-| **I · Le cadre** | le problème (tâches, prix manquants, pont) ; volatilité GARCH et GJR |
-| **II · La diffusion** | EDS de bruitage ; score, Tweedie et paramétrisations ; remonter le temps ; biais de dispersion (théorèmes) |
-| **III · Juger** | règles de score : CRPS, platitude en l'échelle, estimateur équitable, quantiles d'ensemble |
-| **IV · Résultats** | prévision ; imputation et prix manquants ; loi jointe et VaR ; expériences contrôlées |
-| **V · Synthèse** | pourquoi le modèle A et pas le modèle B |
+| **Étude** | 00 vue d'ensemble et sommaire ; 01 méthode : la carte de l'étude (parcours d'un cas, prévision et imputation pas à pas, calendrier des données, qui voit quoi, règles du jeu, glossaire) |
+| **I · Le cadre** | 02 le problème (tâches, prix manquants, pont) ; 03 volatilité GARCH et GJR |
+| **II · La diffusion** | 04 EDS de bruitage ; 05 score, Tweedie et paramétrisations ; 06 remonter le temps ; 07 biais de dispersion (théorèmes) |
+| **III · Juger** | 08 règles de score : CRPS, platitude en l'échelle, estimateur équitable, quantiles d'ensemble |
+| **IV · Résultats** | 09 prévision ; 10 imputation et prix manquants ; 11 loi jointe et VaR ; 12 expériences contrôlées ; 13 coût de calcul (comptage des opérations, temps mesurés, mesure en direct) |
+| **V · Synthèse** | 14 pourquoi le modèle A et pas le modèle B |
 
 ## Données
 

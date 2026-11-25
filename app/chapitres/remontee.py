@@ -6,11 +6,12 @@ from scipy.stats import norm
 
 import core as c
 
-c.hero("II · La diffusion", "Remonter le temps, particule par particule",
-       "Vingt mille particules partent d'un bruit gaussien et redescendent tous les niveaux avec le score exact de la loi "
-       "jouet. Le schéma de la remontée et le calendrier sont au choix. Toute différence entre la loi d'arrivée et la vraie "
-       "loi est donc une erreur de discrétisation, jamais une erreur de réseau.",
+c.hero("06", "II · La diffusion", "Remonter le temps, particule par particule",
+       "Vingt mille particules redescendent du bruit vers les données avec le score exact. Toute différence entre la loi d'arrivée et la vraie loi est une erreur de discrétisation, jamais une erreur de réseau.",
        f"Rapport, chapitre 4 · théorème {c.ref('thm-anderson')}, proposition {c.ref('prop-edo')} ; chapitre 5 · tableau {c.ref('tab-schemas')}")
+c.clair("Avec un réseau parfait, la génération reproduit-elle exactement la vraie loi ?",
+        "Pas toujours. Ici le score est exact : toute différence vient de la façon de discrétiser la remontée. La règle d'origine produit une loi trop étroite ; DPM-Solver++ est fidèle dès 20 évaluations.",
+        "Une loi trop étroite sous-estime les pertes extrêmes. Le schéma de génération est un réglage de risque, pas un détail technique.")
 
 st.latex(r"\underbrace{dX=\big[-\tfrac12\beta X-\beta\,\nabla\log p_\tau(X)\big]d\tau+\sqrt\beta\,d\bar W}_{\text{EDS inverse : aléatoire}}"
          r"\qquad\qquad\underbrace{\frac{dx}{d\tau}=-\tfrac12\beta\big(x+\nabla\log p_\tau(x)\big)}_{\text{EDO de flot : déterministe}}")
@@ -24,7 +25,7 @@ with a1:
 with a2:
     n1 = K if s1.startswith("ddpm") else st.select_slider("Évaluations", [5, 10, 20, 50], 10, key="n1")
     if s1.startswith("ddpm"):
-        st.markdown(f"<div style='margin-top:2rem;color:#8a8984'>{K} pas</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='margin-top:2rem;color:#77756f;font-family:IBM Plex Mono,monospace;font-size:.8rem'>{K} pas</div>", unsafe_allow_html=True)
 with a3:
     s2 = st.selectbox("Comparer avec", ["(aucun)"] + opts, index=opts.index("dpm2m") + 1,
                       format_func=lambda s: s if s == "(aucun)" else c.SAMPLER_LABELS[s])
@@ -116,22 +117,27 @@ with cols[3]:
 
 if r2 is not None:
     m2 = metrics(r2["final"])
-    st.markdown(f"<div style='color:#a9a89f;margin-top:.6rem'>Second schéma, {c.SAMPLER_LABELS[s2]} : écart-type "
+    st.markdown(f"<div style='color:#b3b0a6;margin-top:.6rem;font-size:.92rem'>Second schéma, {c.SAMPLER_LABELS[s2]} : écart-type "
                 f"<b>{c.fr(m2['std'])}</b>, kurtosis <b>{c.fr(m2['kurt'], 2)}</b>, couverture <b>{c.fr(m2['cov'])}</b>, "
                 f"VaR 1 % / vraie <b>{c.fr(m2['q'])}</b>.</div>", unsafe_allow_html=True)
 
-if s1 in ("ddpm", "ancestral", "ddim") or (m["std"] < 0.97):
-    c.take("<b>Lecture.</b> La loi d'arrivée est <b>trop étroite</b>. Avec la chaîne d'origine, le bruit réinjecté "
-           "(variance β̃) est plus petit que celui qu'exige la loi (variance β) : chaque pas retire un peu de dispersion. "
-           f"Le théorème {c.ref('thm-deficit')} en donne la forme fermée dans le cas gaussien (écart-type 0,9418 sur le "
-           "calendrier quad, 0,988 sur le cosinus) ; la loi à queues épaisses rétrécit encore davantage, surtout dans les "
-           "queues. Les VaR tirées de ces scénarios seraient trop optimistes.")
+if s1 == "ddim":
+    c.read([("Constat", "loi d'arrivée trop étroite."),
+            ("Cause", f"DDIM est déterministe : dans le cas gaussien, chaque pas multiplie l'état par cos(θₜ − θₛ) < 1 "
+                      f"(proposition {c.ref('prop-ddim')}). La contraction diminue quand le nombre de pas augmente."),
+            ("Conséquence", "des VaR trop optimistes à petit budget.")])
+elif s1 in ("ddpm", "ancestral") or (m["std"] < 0.97):
+    c.read([("Constat", "loi d'arrivée trop étroite."),
+            ("Cause", "le bruit réinjecté (variance β̃) est plus petit que celui qu'exige la loi (variance β)."),
+            ("Ordre de grandeur", f"cas gaussien, théorème {c.ref('thm-deficit')} : écart-type 0,942 (quad), 0,988 (cosinus) ; la queue est plus touchée que le centre."),
+            ("Conséquence", "des VaR trop optimistes.")])
 elif m["std"] > 1.03:
-    c.take("<b>Lecture.</b> La loi d'arrivée est <b>trop large</b> : Euler-Maruyama à grands pas surcorrige, car la dérive "
-           "est évaluée au début d'un pas où le score change beaucoup. Le défaut disparaît quand le nombre de pas augmente.")
+    c.read([("Constat", "loi d'arrivée trop large."),
+            ("Cause", "Euler-Maruyama évalue la dérive au début d'un grand pas, là où le score change beaucoup."),
+            ("Remède", "davantage de pas.")])
 else:
-    c.take("<b>Lecture.</b> La loi d'arrivée est fidèle, au bruit d'échantillonnage près : ce schéma reproduit la vraie "
-           "loi avec ce budget d'évaluations. C'est le cas de la variance β et de DPM-Solver++ dès 20 pas.")
+    c.read([("Constat", "loi d'arrivée fidèle, au bruit d'échantillonnage près."),
+            ("Exemples", "la variance β, et DPM-Solver++ dès 20 évaluations.")])
 c.foot(f"Rapport : tableau {c.ref('tab-schemas')} (les pas de chaque schéma), théorème {c.ref('thm-deficit')} et "
        f"propositions {c.ref('prop-ddim')}, {c.ref('prop-em')} (lois de sortie exactes du cas gaussien), tableau "
        f"{c.ref('tab-jouet')} (loi jouet).")

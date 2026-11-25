@@ -5,11 +5,12 @@ from plotly.subplots import make_subplots
 
 import core as c
 
-c.hero("II · La diffusion", "Le score : une boussole qui pointe vers les données",
-       "Pour remonter le temps, il suffit de connaître, à chaque niveau de bruit, la direction où les données deviennent "
-       "plus probables : le score ∇log pₖ. Ici, la loi est un mélange à queues épaisses qui imite nos rendements ; son "
-       "score est connu exactement, ce qui permet de voir ce qu'un réseau parfait aurait appris.",
+c.hero("05", "II · La diffusion", "Le score : une boussole qui pointe vers les données",
+       'Remonter le temps demande, à chaque niveau de bruit, la direction où les données deviennent plus probables : le score. Sur une loi jouet à queues épaisses, il est connu exactement.',
        f"Rapport, chapitre 4 · exemple {c.ref('ex-melange')}, propositions {c.ref('prop-tweedie')}, {c.ref('prop-conditionnel')}, {c.ref('prop-rotations')}")
+c.clair("Qu'apprend exactement le réseau ?",
+        "À chaque niveau de bruit, la direction dans laquelle les données deviennent plus probables : le score. Le connaître revient à débruiter au mieux ; mais la meilleure estimation moyenne est trop peu dispersée pour servir de scénario.",
+        "D'où une génération par petits pas qui réinjecte du bruit. La quantité réinjectée décide si le risque généré est juste, trop faible ou trop fort.")
 
 st.latex(r"p_0=0{,}85\,\mathcal N(0;\,0{,}6)+0{,}15\,\mathcal N(0;\,3{,}27)\quad\Longrightarrow\quad "
          r"p_k=\sum_i\pi_i\,\mathcal N\!\big(0;\ \bar\alpha_k s_i^2+1-\bar\alpha_k\big)")
@@ -87,10 +88,9 @@ with t2:
 with t3:
     mse = np.mean((x0hat - x0) ** 2)
     c.tile(c.fr(mse, 3), "erreur quadratique de la moyenne (la plus petite possible)", "", None)
-c.take("<b>Lecture.</b> Prédire le bruit avec une erreur quadratique minimale, c'est renvoyer E[ε | xₖ] ; par Tweedie, "
-       "c'est connaître le score. Mais la moyenne E[x₀ | xₖ] écrase la dispersion : utiliser ces moyennes comme "
-       "scénarios sous-estimerait le risque. La génération débruite donc par petits pas et <b>réinjecte du bruit</b>. "
-       "Si elle en réinjecte trop peu, la loi rétrécit : c'est le défaut que démontre la page suivante.")
+c.read([("Débruiter", "prédire le bruit au mieux, c'est connaître le score (formule de Tweedie)."),
+        ("Mais", "la moyenne E[x₀ | xₖ] est trop peu dispersée pour servir de scénario : le risque serait sous-estimé."),
+        ("Donc", "on débruite par petits pas en réinjectant du bruit ; trop peu de bruit donne une loi trop étroite (planche 07).")])
 c.section(c.lab("prop-rotations"), "Que doit prédire le réseau ? Trois paramétrisations, une rotation",
           "ε, x₀ et la vitesse v = cos θ ε − sin θ x₀ sont des coordonnées tournées l'une de l'autre. Elles ont le même "
           "minimiseur, mais propagent différemment les erreurs du réseau.")

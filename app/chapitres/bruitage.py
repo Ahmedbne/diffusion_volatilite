@@ -7,11 +7,12 @@ from scipy.stats import norm
 
 import core as c
 
-c.hero("II · La diffusion", "L'EDS de bruitage, sur une vraie fenêtre",
-       "On prend 65 jours de huit marchés, réduits par la moyenne et l'écart-type de l'apprentissage, puis on les plonge dans "
-       "l'EDS à variance préservée. Le signal s'efface, la variance reste à 1, et au dernier niveau il ne reste qu'un bruit "
-       "gaussien : c'est de là que partira la génération.",
+c.hero("04", "II · La diffusion", "L'EDS de bruitage, sur une vraie fenêtre",
+       "Une vraie fenêtre de huit marchés est plongée dans l'EDS à variance préservée : le signal s'efface, la variance reste à 1, il ne reste qu'un bruit gaussien. La génération partira de là.",
        f"Rapport, chapitre 4 · proposition {c.ref('prop-vp')}, corollaire {c.ref('cor-chaine')}, figure {c.ref('fig-calendriers')}")
+c.clair("Comment un modèle de diffusion apprend-il à générer des rendements ?",
+        "En apprenant à défaire une destruction. On noie progressivement une vraie fenêtre de marché dans un bruit gaussien, jusqu'à ce qu'il ne reste que du bruit ; générer, c'est parcourir ce chemin à l'envers.",
+        "La destruction suit une équation connue exactement. C'est ce qui rend le chemin retour apprenable, et ce qui permet de calculer les erreurs de la génération.")
 
 df, mu, sd = c.returns()
 z = (df - mu) / sd
@@ -131,11 +132,9 @@ c.figure("numerique", "Euler-Maruyama de l'EDS continue contre la loi exacte",
          "Le schéma d'Euler-Maruyama à pas fin redonne la loi de la proposition : la chaîne discrète n'est que l'EDS "
          "observée aux niveaux de la grille.")
 c.plot(f4, 380)
-c.take(f"<b>Lecture.</b> Les 4 000 trajectoires d'Euler-Maruyama retrouvent la moyenne √ᾱ·x₀ et l'écart-type √(1−ᾱ) "
-       f"de la proposition (écart maximal sur l'écart-type : {c.fr(err, 3)}). C'est le contenu du corollaire du rapport : la "
-       f"chaîne discrète n'est qu'une observation de l'EDS à {K} instants, donc le même réseau peut servir à d'autres "
-       "schémas de génération. "
-       f"Le signal domine le bruit jusqu'au niveau {k_half} (ᾱ > 1/2) ; au-delà, le bruit l'emporte.")
+c.read([("Moyenne et écart-type", f"ceux de la proposition, retrouvés par 4 000 trajectoires (écart maximal {c.fr(err, 3)} sur l'écart-type)."),
+        ("Conséquence", f"la chaîne discrète est l'EDS observée à {K} instants : le même réseau peut servir à d'autres schémas."),
+        ("Signal et bruit", f"le signal domine jusqu'au niveau {k_half} (ᾱ > 1/2), le bruit au-delà.")])
 
 c.section(c.lab("fig-calendriers"), "Deux calendriers, deux tailles de pas",
           "Le modèle A suit le calendrier cosinus à 200 niveaux, le modèle B le calendrier quad à 50 niveaux. La valeur "

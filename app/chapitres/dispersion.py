@@ -8,12 +8,13 @@ import streamlit as st
 import core as c
 import theorie as T
 
-c.hero("II · La diffusion", "Biais de dispersion : ce que les schémas font à la loi",
-       "Dans le seul cas où tout se calcule (données N(0,1), débruiteur exact), chaque pas de chaque schéma est affine "
-       "en l'état : la loi de sortie s'obtient exactement par récurrence. Choisissez un calendrier, même inventé, et lisez "
-       "ce qu'un réseau parfait produirait.",
+c.hero("07", "II · La diffusion", "Biais de dispersion : ce que les schémas font à la loi",
+       "Données N(0, 1), débruiteur exact : chaque pas de chaque schéma est affine en l'état, et la loi de sortie se calcule par récurrence. Choisissez un calendrier, même inventé.",
        f"Rapport, chapitre 5 · théorème {c.ref('thm-deficit')}, propositions {c.ref('prop-ddim')} et {c.ref('prop-em')}, "
        f"tableaux {c.ref('tab-exact')} et {c.ref('tab-jouet')}")
+c.clair("De combien chaque schéma de génération déforme-t-il le risque ?",
+        "Dans le cas gaussien, on le calcule exactement : la règle d'origine du modèle B perd 5,8 % d'écart-type, DDIM rétrécit toujours, Euler-Maruyama élargit, DPM-Solver++ est fidèle à 20 pas.",
+        "Ces formules prédisent, avant toute donnée, la couverture des intervalles d'un modèle entraîné : un défaut de calibration se calcule à l'avance.")
 
 st.latex(r"\text{Cas de référence : }x_0\sim\mathcal N(0,1),\quad \hat x_0=\sqrt{\bar\alpha_t}\,x,\quad "
          r"\hat\varepsilon=\sqrt{1-\bar\alpha_t}\,x,\quad \hat s=-x")
@@ -92,7 +93,7 @@ c.plot(g, 400)
 
 l, rr = st.columns(2)
 with l:
-    st.markdown(f"**Proposition {c.ref('prop-ddim')} : DDIM contracte**")
+    st.markdown(f'<div class="stmt">Proposition {c.ref("prop-ddim")} · DDIM contracte</div>', unsafe_allow_html=True)
     st.latex(r"x_s=\cos(\theta_t-\theta_s)\,x_t,\qquad \rho=\cos\theta_{g_n}\prod_i\cos(\theta_{g_i}-\theta_{g_{i+1}})<1")
     n_d = st.select_slider("Évaluations (DDIM)", [n for n in ns if n >= 3], value=min(10, K))
     th = np.arccos(np.sqrt(ab)); gr = T.grid(K, n_d)
@@ -104,7 +105,7 @@ with l:
     st.caption(f"ρ = {c.fr(T.gaussian_output_std(ab, 'ddim', n_d), 4)} ; approximation régulière en angle "
                f"cosⁿ⁻¹(π / 2(n − 1)) = {c.fr(math.cos(math.pi / (2 * (n_d - 1))) ** (n_d - 1), 4)}.")
 with rr:
-    st.markdown(f"**Proposition {c.ref('prop-em')} : Euler-Maruyama dilate**")
+    st.markdown(f'<div class="stmt">Proposition {c.ref("prop-em")} · Euler-Maruyama dilate</div>', unsafe_allow_html=True)
     st.latex(r"v'-1=\big(1-\tfrac B2\big)^2(v-1)+\tfrac{B^2}{4},\qquad B=\ln\frac{\bar\alpha_s}{\bar\alpha_t}")
     n_e = st.select_slider("Évaluations (Euler-Maruyama)", [n for n in ns if n >= 3], value=min(10, K))
     gr = T.grid(K, n_e); v = 1.0; ex = []
@@ -145,9 +146,7 @@ h.update_layout(xaxis_title="écart-type exact, cas gaussien", yaxis_title="éca
 c.plot(h, 400)
 with st.expander("Toutes les configurations"):
     st.dataframe(dft.round(3).sort_values(["calendrier", "schéma", "évaluations"]), hide_index=True, width="stretch")
-c.read(f"<b>Lecture.</b> La même règle d'origine perd 5,8 % d'écart-type sur le calendrier du modèle B et 1,2 % sur celui "
-       "du modèle A : le calendrier pèse autant que le schéma. DDIM rétrécit toujours, Euler-Maruyama dilate, "
-       "DPM-Solver++(2M) dilate un peu à petit budget puis devient fidèle au second ordre. Sur la loi à queues épaisses, "
-       "les défauts vont dans le même sens et la queue est plus touchée que le centre : la VaR à 1 % de la règle d'origine "
-       "est sous-estimée de 10 % sur le calendrier quad. Pour un modèle de risque, le schéma et le nombre de pas sont des "
-       "paramètres de calibration.")
+c.read([("Calendrier", "la même règle d'origine perd 5,8 % d'écart-type sur le calendrier de B, 1,2 % sur celui de A."),
+        ("Schémas", "DDIM rétrécit toujours ; Euler-Maruyama dilate ; DPM-Solver++(2M) dilate un peu à petit budget, puis devient fidèle."),
+        ("Queues épaisses", "défauts dans le même sens, queue plus touchée : VaR 1 % de la règle d'origine sous-estimée de 10 % (quad)."),
+        ("Conséquence", "le schéma et le nombre de pas sont des paramètres de calibration.")])

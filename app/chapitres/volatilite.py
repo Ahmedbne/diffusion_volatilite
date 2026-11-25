@@ -5,11 +5,12 @@ import streamlit as st
 
 import core as c
 
-c.hero("I · Le cadre", "Volatilité : ce que savent les GARCH",
-       "Un rendement est une innovation de forme fixe multipliée par une volatilité qui suit une récurrence. Quatre "
-       "propriétés de cette récurrence expliquent la plupart des résultats : la réaction asymétrique aux nouvelles, les "
-       "queues épaisses qu'elle engendre, le retour de la variance vers sa moyenne et l'invariance par changement d'échelle.",
+c.hero("03", "I · Le cadre", "Volatilité : ce que savent les GARCH",
+       "Un rendement est un choc de forme fixe multiplié par une volatilité qui suit une récurrence. Quatre propriétés de cette récurrence expliquent l'essentiel des résultats.",
        f"Rapport, chapitre 3 · propositions {c.ref('prop-kurtosis')}, {c.ref('prop-prevision')}, {c.ref('prop-echelle')}")
+c.clair("Que sait déjà le modèle de référence, le GARCH, de la façon dont le risque évolue ?",
+        "Quatre choses : une baisse agite davantage le marché qu'une hausse ; une volatilité qui fluctue rend les krachs plus fréquents que sous une loi normale ; après un choc, le risque revient vers sa moyenne ; et rien de cela ne dépend de l'unité.",
+        "C'est ce savoir, écrit en six paramètres, que le modèle de diffusion doit redécouvrir seul dans les données. C'est aussi ce qui rend le GARCH si difficile à battre.")
 
 st.latex(r"r_t=\mu+\sigma_t z_t,\qquad \sigma_t^2=\omega+\big(\alpha+\gamma\,\mathbf 1\{\varepsilon_{t-1}<0\}\big)\varepsilon_{t-1}^2+\beta\,\sigma_{t-1}^2,"
          r"\qquad \phi=\alpha+\beta+\tfrac12\gamma")
@@ -158,7 +159,6 @@ for col in show.columns[2:]:
     show[col] = (show[col].astype(str).str.replace("--", "—", regex=False).str.replace(".", ",", regex=False)
                  .str.replace("-", "−", regex=False))
 st.dataframe(show, hide_index=True, width="stretch", height=36 * (len(show) + 1) + 4)
-c.read("<b>Lecture.</b> L'asymétrie est toute la réaction aux nouvelles : α est estimé à zéro, γ entre 0,19 et 0,25. "
-       "Une baisse de 2 % ajoute 4γ ≈ 1 à la variance du lendemain, une hausse rien. La persistance est forte (demi-vies de "
-       "41 à 116 jours) et le GARCH symétrique du S&P 500 est même intégré (φ = 1) : ses prévisions ne reviennent plus vers "
-       "la moyenne.")
+c.read([("Asymétrie", "α estimé à 0, γ entre 0,19 et 0,25 : une baisse de 2 % ajoute 4γ ≈ 1 %² à la variance du lendemain, une hausse rien."),
+        ("Persistance", "demi-vies de 41 à 116 jours."),
+        ("GARCH du S&P 500", "intégré (φ = 1) : ses prévisions ne reviennent plus vers la moyenne.")])
