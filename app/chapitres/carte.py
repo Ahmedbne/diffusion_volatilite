@@ -291,7 +291,7 @@ c.steps([
 ])
 
 # ---------------------------------------------------------------- glossaire
-c.section("Glossaire", "Comment on juge, en mots simples",
+c.section(f"Annexe {c.ref('ann-glossaire')}", "Comment on juge, en mots simples",
           "Chaque terme apparaît dans les planches de résultats. « Mieux » est toujours précisé.")
 c.glossary([
     ("Scénario", "une trajectoire simulée", "Un futur ou une complétion possible. Un modèle en produit M = 99 ; leur ensemble "
