@@ -6,12 +6,12 @@ from scipy.stats import norm
 
 import core as c
 
-c.hero("06", "II · La diffusion", "Remonter le temps, particule par particule",
-       "Vingt mille particules redescendent du bruit vers les données avec le score exact. Toute différence entre la loi d'arrivée et la vraie loi est une erreur de discrétisation, jamais une erreur de réseau.",
+c.hero("06", "II · La diffusion", "Processus inverse",
+       "20 000 particules avec score exact : tout écart à la vraie loi provient de la discrétisation.",
        f"Rapport, chapitre 4 · théorème {c.ref('thm-anderson')}, proposition {c.ref('prop-edo')} ; chapitre 5 · tableau {c.ref('tab-schemas')}")
-c.clair("Avec un réseau parfait, la génération reproduit-elle exactement la vraie loi ?",
-        "Pas toujours. Ici le score est exact : toute différence vient de la façon de discrétiser la remontée. La règle d'origine produit une loi trop étroite ; DPM-Solver++ est fidèle dès 20 évaluations.",
-        "Une loi trop étroite sous-estime les pertes extrêmes. Le schéma de génération est un réglage de risque, pas un détail technique.")
+c.clair("Erreur de discrétisation à score exact.",
+        "La règle d'origine produit une loi trop étroite ; DPM-Solver++ est fidèle dès 20 évaluations.",
+        "Une loi trop étroite sous-estime les pertes extrêmes : le schéma est un paramètre de risque.")
 
 st.latex(r"\underbrace{dX=\big[-\tfrac12\beta X-\beta\,\nabla\log p_\tau(X)\big]d\tau+\sqrt\beta\,d\bar W}_{\text{EDS inverse : aléatoire}}"
          r"\qquad\qquad\underbrace{\frac{dx}{d\tau}=-\tfrac12\beta\big(x+\nabla\log p_\tau(x)\big)}_{\text{EDO de flot : déterministe}}")
@@ -36,7 +36,7 @@ if s2 != "(aucun)" and not s2.startswith("ddpm"):
     n2 = st.select_slider("Évaluations du second schéma", [5, 10, 20, 50], 10, key="n2")
 gauss = data.startswith("N")
 
-with st.spinner("Remontée des particules…"):
+with st.spinner("Simulation…"):
     r1 = c.run_sampler(sched, s1, None if s1.startswith("ddpm") else n1, gauss, keep=4000)
     r2 = c.run_sampler(sched, s2, None if s2.startswith("ddpm") else n2, gauss, keep=60) if s2 != "(aucun)" else None
 
@@ -54,8 +54,8 @@ edges = np.linspace(-5, 5, 121)
 mids = 0.5 * (edges[1:] + edges[:-1])
 H = np.array([np.histogram(paths[:, j], edges, density=True)[0] for j in range(paths.shape[1])]).T
 steps = np.arange(paths.shape[1])
-c.figure("numerique", "La densité des particules pendant la remontée",
-         "Chaque colonne est l'histogramme des 4 000 premières particules après une évaluation ; 40 trajectoires en blanc.")
+c.figure("numerique", "Densité au cours du processus inverse",
+         "Histogramme de 4 000 particules après chaque évaluation ; 40 trajectoires.")
 fig = go.Figure()
 fig.add_trace(go.Heatmap(z=np.sqrt(H), x=steps, y=mids, colorscale=[[0, "rgba(0,0,0,0)"], [0.25, "#1c3556"],
                                                                      [0.6, "#3987e5"], [1, "#e7f0fb"]],
@@ -63,14 +63,14 @@ fig.add_trace(go.Heatmap(z=np.sqrt(H), x=steps, y=mids, colorscale=[[0, "rgba(0,
 for p in range(40):
     fig.add_trace(go.Scatter(x=steps, y=paths[p], mode="lines", line=dict(color="rgba(240,239,236,.33)", width=0.8),
                              showlegend=False, hoverinfo="skip"))
-fig.update_layout(title=f"{c.SAMPLER_LABELS[s1]} : la densité des particules, du bruit (gauche) aux données (droite)",
+fig.update_layout(title=f"{c.SAMPLER_LABELS[s1]} : du bruit (gauche) aux données (droite)",
                   xaxis=dict(title="évaluation du réseau", tickvals=steps,
                              ticktext=[f"k={l}" if (i % max(1, len(steps) // 10) == 0 or l == 0) else "" for i, l in enumerate(levels)]),
                   yaxis=dict(title="x", range=[-5, 5]))
 c.plot(fig, 400)
 
 # ---------------------------------------------------------------- loi d'arrivée
-c.figure("numerique", "La loi d'arrivée face à la vraie loi")
+c.figure("numerique", "Loi simulée et loi exacte")
 grid = np.linspace(-6, 6, 400)
 bins = np.linspace(-6, 6, 97)
 ctr = 0.5 * (bins[1:] + bins[:-1])
@@ -88,8 +88,8 @@ f2.add_trace(go.Scatter(x=ctr, y=dens(r1["final"]), name=c.SAMPLER_LABELS[s1], m
 if r2 is not None:
     f2.add_trace(go.Scatter(x=ctr, y=dens(r2["final"]), name=c.SAMPLER_LABELS[s2], mode="lines",
                             line=dict(color=c.BLUE, width=2.4, shape="hvh")))
-f2.update_layout(title="La loi d'arrivée face à la vraie loi", xaxis_range=[-6, 6])
-log = st.toggle("Échelle logarithmique (voir les queues)", value=True)
+f2.update_layout(title="Loi simulée et loi exacte", xaxis_range=[-6, 6])
+log = st.toggle("Échelle logarithmique", value=True)
 if log:
     f2.update_yaxes(type="log", range=[-4, 0], tickvals=[1e-4, 1e-3, 1e-2, 1e-1, 1],
                     ticktext=["10⁻⁴", "10⁻³", "10⁻²", "10⁻¹", "1"])
@@ -122,22 +122,22 @@ if r2 is not None:
                 f"VaR 1 % / vraie <b>{c.fr(m2['q'])}</b>.</div>", unsafe_allow_html=True)
 
 if s1 == "ddim":
-    c.read([("Constat", "loi d'arrivée trop étroite."),
+    c.read([("Constat", "loi trop étroite."),
             ("Cause", f"DDIM est déterministe : dans le cas gaussien, chaque pas multiplie l'état par cos(θₜ − θₛ) < 1 "
-                      f"(proposition {c.ref('prop-ddim')}). La contraction diminue quand le nombre de pas augmente."),
-            ("Conséquence", "des VaR trop optimistes à petit budget.")])
+                      f"(proposition {c.ref('prop-ddim')}). La contraction diminue avec le nombre de pas."),
+            ("Conséquence", "VaR sous-estimée à petit nombre de pas.")])
 elif s1 in ("ddpm", "ancestral") or (m["std"] < 0.97):
-    c.read([("Constat", "loi d'arrivée trop étroite."),
-            ("Cause", "le bruit réinjecté (variance β̃) est plus petit que celui qu'exige la loi (variance β)."),
-            ("Ordre de grandeur", f"cas gaussien, théorème {c.ref('thm-deficit')} : écart-type 0,942 (quad), 0,988 (cosinus) ; la queue est plus touchée que le centre."),
-            ("Conséquence", "des VaR trop optimistes.")])
+    c.read([("Constat", "loi trop étroite."),
+            ("Cause", "variance réinjectée β̃ inférieure à la variance requise β."),
+            ("Ordre de grandeur", f"cas gaussien (théorème {c.ref('thm-deficit')}) : écart-type 0,942 (quad), 0,988 (cosinus) ; queues plus affectées que le centre."),
+            ("Conséquence", "VaR sous-estimée.")])
 elif m["std"] > 1.03:
-    c.read([("Constat", "loi d'arrivée trop large."),
-            ("Cause", "Euler-Maruyama évalue la dérive au début d'un grand pas, là où le score change beaucoup."),
-            ("Remède", "davantage de pas.")])
+    c.read([("Constat", "loi trop large."),
+            ("Cause", "Euler-Maruyama évalue la dérive en début de pas, là où le score varie fortement."),
+            ("Remède", "augmenter le nombre de pas.")])
 else:
-    c.read([("Constat", "loi d'arrivée fidèle, au bruit d'échantillonnage près."),
-            ("Exemples", "la variance β, et DPM-Solver++ dès 20 évaluations.")])
+    c.read([("Constat", "loi fidèle, au bruit Monte-Carlo près."),
+            ("Exemples", "variance β ; DPM-Solver++ dès 20 évaluations.")])
 c.foot(f"Rapport : tableau {c.ref('tab-schemas')} (les pas de chaque schéma), théorème {c.ref('thm-deficit')} et "
        f"propositions {c.ref('prop-ddim')}, {c.ref('prop-em')} (lois de sortie exactes du cas gaussien), tableau "
        f"{c.ref('tab-jouet')} (loi jouet).")

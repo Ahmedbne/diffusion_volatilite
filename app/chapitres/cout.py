@@ -11,39 +11,35 @@ T20 = float(SV[(SV.sampler == "dpm2m") & (SV.nfe == 20)].sec_per_1000.iloc[0]) /
 A, B, G = K.per_scenario("A"), K.per_scenario("B"), K.ref_per_scenario("GJR-t")
 CAMP_A = K.CAMPAIGNS["A_prev"]["scenarios"]
 
-c.hero("13", "IV · Résultats", "Coût de calcul : le prix d'un scénario",
-       "On compte les opérations à partir des architectures, on vérifie ce comptage contre les temps chronométrés pendant "
-       "l'étude, puis on mesure en direct sur cette machine.",
+c.hero("13", "IV · Résultats", "Coût de calcul",
+       "Comptage des opérations, validation sur les temps de l'étude, mesure sur cette machine.",
        f"Rapport · section {c.ref('sec-cout')}, tableau {c.ref('tab-cout')}, équation ({c.ref('eq-cout')}) ; architectures : "
        f"sections {c.ref('sec-modeleA')} et {c.ref('sec-modeleB')}")
 
-c.clair("Combien de calcul pour un scénario de diffusion, comparé à un GARCH ?",
-        f"Modèle A : {c.sci(A, 1)} opérations par scénario. GJR-t : ≈ {c.big(G)}. Un rapport d'environ "
-        f"{c.sci(A / G, 0)}, pour une précision égale sur la loi de chaque jour.",
-        f"La prévision complète du test représente {round(CAMP_A * T20 / 60):.0f} minutes de génération pour A, "
-        "une fraction de seconde pour un GJR-t. Le coût n'interdit pas l'usage ; il exige un gain ailleurs que sur la loi "
-        "de demain.")
+c.clair("Coût d'un scénario : diffusion contre GARCH.",
+        f"A : {c.sci(A, 1)} opérations par scénario ; GJR-t : ≈ {c.big(G)}. Rapport ≈ "
+        f"{c.sci(A / G, 0)}, à précision marginale égale.",
+        f"Prévision du test : {round(CAMP_A * T20 / 60):.0f} minutes pour A, moins d'une seconde pour un GJR-t. "
+        "Le surcoût se justifie seulement au-delà des marges.")
 
 # ---------------------------------------------------------------- 1. le comptage
-c.section("Le comptage", "D'où viennent ces nombres")
+c.section("Comptage", "Modèle de coût")
 c.statement(f"Équation {c.ref('eq-cout')} · modèle de coût",
             r"C_{\text{éval}}\approx\underbrace{2\,P\,N}_{\text{poids}\times\text{positions}}"
             r"+\underbrace{\sum_{\text{attentions}}4\,n^2 d}_{QK^\top\text{ et poids}\cdot V},\qquad "
             r"C_{\text{scénario}}=\text{NFE}\times C_{\text{éval}},\qquad C_{\text{apprentissage}}\approx3\,C_{\text{éval}}"
             r"\ \text{par fenêtre}")
-c.read([("Convention", "une multiplication-addition compte pour deux opérations."),
-        ("2PN", "chaque poids sert une fois par position ; majorant, car quelques poids (plongement du niveau) ne servent "
-                "qu'une fois par évaluation."),
-        ("Attention", "les projections Q, K, V, O sont déjà dans P ; il reste 4n²d par séquence de n positions."),
-        ("NFE", "évaluations du réseau par scénario : 20 pour A, 50 pour B.")], "Hypothèses")
+c.read([("Convention", "1 multiplication-addition = 2 opérations."),
+        ("2PN", "un usage par poids et par position (majorant : le plongement du niveau ne sert qu'une fois)."),
+        ("Attention", "projections incluses dans P ; reste 4n²d par séquence de n positions."),
+        ("NFE", "20 évaluations pour A, 50 pour B.")], "Hypothèses")
 
-c.section("Vérification 1", "La largeur du modèle A est bornée par son nombre de paramètres",
-          "Le rapport ne donne pas cette largeur. Chaque bloc résiduel (convolution dilatée C → 2C de largeur 3, "
-          "projection de sortie C → 2C) compte au moins 8C² paramètres ; cinq blocs et l'attention, au moins 44C².")
+c.section("Vérification 1", "Borne sur la largeur du modèle A",
+          "Largeur non publiée. Bloc résiduel (convolution dilatée C → 2C, largeur 3, sortie C → 2C) : au moins 8C² paramètres ; cinq blocs et attention : au moins 44C².")
 Cs = np.arange(32, 65)
 fl = [K.width_floor_params(C) for C in Cs]
-c.figure("analytique", "Paramètres minimaux selon la largeur C, face aux 146 401 du modèle A",
-         f"Au-delà de C = {K.WIDTH_MAX_A}, l'architecture décrite ne tient pas dans 146 401 paramètres.")
+c.figure("analytique", "Nombre minimal de paramètres selon la largeur C",
+         f"C > {K.WIDTH_MAX_A} dépasse les 146 401 paramètres du modèle A.")
 fw = go.Figure()
 fw.add_trace(go.Scatter(x=Cs, y=fl, mode="lines", line=dict(color=c.INK_2, width=2), name="minimum",
                         hovertemplate="C = %{x}<br>%{y:,} paramètres au minimum<extra></extra>"))
@@ -63,28 +59,26 @@ for key, e in (("A", eA), ("B", eB)):
                  "attention": c.sci(e["attention"], 2), "part attention": f"{c.fr(100 * e['attention'] / e['total'], 1)} %",
                  "par évaluation": c.sci(e["total"], 2), "NFE": m["nfe"], "par scénario": c.sci(m["nfe"] * e["total"], 2)})
 st.table(pd.DataFrame(rows).set_index(""))
-c.read([("Modèle A", f"{c.sci(lo, 2)} à {c.sci(hi, 2)} opérations par scénario selon la largeur : l'incertitude sur C "
-                     f"pèse {c.fr(100 * (hi / lo - 1), 1)} %."),
-        ("Modèle B", f"largeur 64 donnée par le rapport : {c.sci(B, 2)} opérations par scénario, "
+c.read([("Modèle A", f"{c.sci(lo, 2)} à {c.sci(hi, 2)} opérations par scénario ; incertitude liée à C : "
+                     f"{c.fr(100 * (hi / lo - 1), 1)} %."),
+        ("Modèle B", f"largeur 64 : {c.sci(B, 2)} opérations par scénario, "
                      f"{c.fr(B / A, 0)} fois le modèle A.")])
 
-c.section("Vérification 2", "Le coût d'un tirage aléatoire, chronométré",
-          "Un GARCH ne fait presque que tirer des chocs. Le coût d'un tirage est mesuré ici en équivalent de multiplications "
-          "ou additions élémentaires, sur cette machine.")
+c.section("Vérification 2", "Coût d'un tirage aléatoire",
+          "Mesuré sur cette machine, en équivalent d'opérations élémentaires.")
 if "tirages" not in st.session_state:
     st.session_state["tirages"] = K.measure_draw_costs()
 dc = st.session_state["tirages"]
 t = st.columns(3)
 for col, (k, lab) in zip(t, (("normal", "tirage normal"), ("student", "tirage de Student"), ("index", "indice entier"))):
     with col:
-        c.tile(f"{c.fr(dc[k], 0)} op.", f"{lab}, mesuré ; convention retenue : {K.DRAW[k]}", "numérique, cette machine", None)
+        c.tile(f"{c.fr(dc[k], 0)} op.", f"{lab} ; convention : {K.DRAW[k]}", "numérique, cette machine", None)
 st.table(pd.DataFrame([(k, v[0], v[1], v[1] * 10) for k, v in K.REF_OPS_PER_STEP.items()],
-                      columns=["Méthode", "À chaque jour simulé", "Opérations / jour", "Pour 10 jours"]).set_index("Méthode"))
+                      columns=["Méthode", "Calcul par jour simulé", "Opérations / jour", "Pour 10 jours"]).set_index("Méthode"))
 
 # ---------------------------------------------------------------- 2. coût contre précision
-c.section(c.lab("sec-prev_I"), f"{c.sci(A / G, 0)} fois plus cher, pour quoi ?",
-          "Chaque méthode du panel I placée selon son coût par scénario et son score, rapporté au GJR-t et moyenné sur les "
-          "trois indices.")
+c.section(c.lab("sec-prev_I"), f"Coût et précision (rapport de coût {c.sci(A / G, 0)})",
+          "Score relatif au GJR-t, moyenne des trois indices.")
 score = st.radio("Score", ["CRPS moyen sur 10 jours : la loi de chaque jour", "CRPS de la volatilité réalisée : la trajectoire"],
                  horizontal=True)
 col = "CRPS_avg" if score.startswith("CRPS moyen") else "CRPS_RV"
@@ -93,9 +87,8 @@ LAB = {"HS": "simulation historique", "EWMA-N": "EWMA", "GARCH-t": "GARCH-t", "G
        "Diffusion": "modèle A"}
 rel = {m: 100 * np.mean([fc[(fc["index"] == i) & (fc.model == m)][col].iloc[0] /
                          fc[(fc["index"] == i) & (fc.model == "GJR-t")][col].iloc[0] - 1 for i in c.INDICES_I]) for m in LAB}
-c.figure("empirique", "Score relatif au GJR-t selon le coût par scénario",
-         "Ordonnée : mesurée sur le test (négatif : meilleur que GJR-t). Abscisse : comptée. Gris : références ; couleur : "
-         "diffusion.")
+c.figure("empirique", "Score et coût par scénario",
+         "Score mesuré sur le test (négatif : meilleur), coût compté.")
 f = go.Figure()
 xs = {m: (A if m == "Diffusion" else K.ref_per_scenario(m)) for m in LAB}
 POS = {"HS": "middle right", "EWMA-N": "top center", "GARCH-t": "top left", "GJR-t": "bottom right", "FHS": "middle right",
@@ -112,15 +105,15 @@ f.update_layout(xaxis=dict(type="log", title="opérations par scénario de 10 jo
                 yaxis_title="score relatif au GJR-t (%)")
 c.plot(f, 360)
 if col == "CRPS_avg":
-    c.read([("Loi de chaque jour", f"A à {c.fr(rel['Diffusion'], 2, True)} % du GJR-t, dans le paquet des GARCH."),
-            ("Prix", f"{c.sci(A / G, 0)} fois plus d'opérations : la dépense n'achète rien que le GARCH ne donne déjà.")])
+    c.read([("Marges", f"A à {c.fr(rel['Diffusion'], 2, True)} % du GJR-t, au niveau des GARCH."),
+            ("Prix", f"{c.sci(A / G, 0)} fois plus d'opérations sans gain sur les marges.")])
 else:
     c.read([("Trajectoire", f"A à {c.fr(rel['Diffusion'], 1, True)} % du GJR-t en moyenne, meilleur sur les trois indices."),
-            ("Prix", "c'est le seul score de cette figure où la dépense se voit.")])
+            ("Prix", "seul score de la figure avec un gain.")])
 
 # ---------------------------------------------------------------- 3. mesuré pendant l'étude
-c.section(c.lab("sec-choix_schema"), "Mesuré pendant l'étude : le temps suit le nombre d'évaluations",
-          "Temps de génération chronométrés sur la validation du panel I, pour chaque schéma et chaque budget.")
+c.section(c.lab("sec-choix_schema"), "Temps mesurés",
+          "Validation du panel I, par schéma et nombre de pas.")
 ref = float(SV[SV.sampler == "ddpm-large"].rel_sd.iloc[0])
 NM = {"ddim": ("DDIM", c.ORANGE), "dpm2m": ("DPM-Solver++(2M)", c.BLUE), "ddpm-large": ("ancestral β, 200 pas", c.INK_2)}
 fit = np.polyfit(SV.nfe, SV.sec_per_1000, 1)
@@ -143,7 +136,7 @@ with g1:
                     yaxis=dict(type="log", title="secondes / 1 000 scénarios"))
     c.plot(h, 320)
 with g2:
-    c.figure("empirique", "Ce que le temps achète : l'écart-type de la loi", "Rapporté à la référence à 200 pas (1 : fidèle).")
+    c.figure("empirique", "Écart-type prédictif selon le temps", "Relatif à la référence à 200 pas.")
     h2 = go.Figure()
     h2.add_hline(y=1, line=dict(color=c.INK, width=1))
     for s, (lab, colr) in NM.items():
@@ -159,15 +152,14 @@ with g2:
 big200 = float(SV[SV.sampler == "ddpm-large"].sec_per_1000.iloc[0])
 thr = A / T20 / 1e9
 d20 = SV[(SV.nfe == 20)].set_index("sampler").rel_sd / ref
-c.read([("Proportionnalité", f"temps affine en NFE, R² = {c.fr(r2, 4)} : le modèle de coût est confirmé."),
-        ("Calibration", f"à 20 évaluations, DPM-Solver++(2M) est à {c.fr(100 * (d20['dpm2m'] - 1), 1, True)} % de la référence, "
-                        f"DDIM à {c.fr(100 * (d20['ddim'] - 1), 1, True)} % : le choix du schéma est gratuit."),
+c.read([("Proportionnalité", f"temps affine en NFE, R² = {c.fr(r2, 4)}, conforme au modèle de coût."),
+        ("Calibration", f"à 20 évaluations, DPM-Solver++(2M) à {c.fr(100 * (d20['dpm2m'] - 1), 1, True)} % de la référence, "
+                        f"DDIM à {c.fr(100 * (d20['ddim'] - 1), 1, True)} %, à coût égal."),
         ("Nombre de pas", f"la référence à 200 pas coûte {c.fr(big200 / (T20 * 1000), 1)} fois plus."),
-        ("Débit effectif", f"{c.fr(thr, 0)} GFLOP/s (opérations comptées / temps mesuré) : le comptage ordonne les coûts, "
-                           "il ne prédit pas les temps.")])
+        ("Débit effectif", f"{c.fr(thr, 0)} GFLOP/s : le comptage ordonne les coûts mais ne prédit pas les durées.")])
 
 # ---------------------------------------------------------------- 4. campagnes
-c.section("Campagnes du test", "Le coût de l'étude entière")
+c.section("Campagnes de test", "Coût total")
 rowsC = []
 for key, cp in K.CAMPAIGNS.items():
     ops = cp["scenarios"] * K.per_scenario(cp["model"], d=dA if cp["model"] == "A" else None)
@@ -179,8 +171,8 @@ rowsC.append({"campagne": "GJR-t · prévision, panel I", "composition": "4 392 
 st.table(pd.DataFrame(rowsC).set_index("campagne"))
 
 # ---------------------------------------------------------------- 5. mesure en direct
-c.section("En direct", "Sur la machine qui affiche cette page",
-          "Débit d'un grand produit matriciel (le meilleur cas pour un réseau) et simulation réelle de la campagne GJR-t.")
+c.section("Mesure locale", "Machine courante",
+          "Produit matriciel (débit crête) et simulation de la campagne GJR-t.")
 if st.button("Mesurer à nouveau") or "mesure" not in st.session_state:
     with st.spinner("Mesure en cours…"):
         st.session_state["mesure"] = (K.measure_matmul_gflops(), *K.measure_gjr_campaign())
@@ -192,12 +184,12 @@ with m[0]:
 with m[1]:
     c.tile(f"{c.fr(sec, 2)} s", f"campagne GJR-t simulée : {c.big(n)} scénarios de 10 jours", "mesuré", True)
 with m[2]:
-    c.tile(f"≥ {c.fr(lower, 0)} s", "même campagne, modèle A : opérations / débit crête", "borne basse", False)
-c.read([("Rapport mesuré", f"au moins {c.fr(lower / sec, 0)} fois plus lent ici, même au débit crête."),
-        ("Pourquoi une borne", f"un petit réseau tourne bien en dessous du débit crête ; l'étude a mesuré {c.fr(thr, 0)} GFLOP/s.")])
+    c.tile(f"≥ {c.fr(lower, 0)} s", "même campagne, modèle A, au débit crête", "borne basse", False)
+c.read([("Rapport mesuré", f"modèle A au moins {c.fr(lower / sec, 0)} fois plus lent."),
+        ("Borne inférieure", f"un petit réseau reste loin du débit crête ({c.fr(thr, 0)} GFLOP/s mesurés dans l'étude).")])
 
 # ---------------------------------------------------------------- 6. apprentissage
-c.section("Apprentissage", "Le coût caché : apprendre, régler, recommencer")
+c.section("Apprentissage", "Coût d'entraînement")
 c.statement("Coût d'un entraînement", r"C_{\text{entr.}}\approx\underbrace{3\,C_{\text{éval}}}_{\text{par fenêtre}}"
             r"\times\text{taille de lot}\times\text{pas}")
 tt = st.columns(3)
@@ -208,11 +200,9 @@ with tt[1]:
 with tt[2]:
     c.tile("8", "entraînements du modèle A : 3 pour l'ensemble, 5 variantes d'ablation", "rapport, section " + c.ref("sec-ablation"),
            None)
-c.read([("Inconnu", "la taille de lot n'est pas donnée par le rapport : le coût total d'un entraînement n'est pas chiffré ici."),
-        ("Ordre de grandeur", f"avec l'arrêt vers 2 000 pas du modèle A, chaque unité de taille de lot coûte "
-                              f"{c.sci(2000 * K.per_training_example('A', dA), 1)} opérations."),
-        ("GARCH", "six paramètres estimés par maximum de vraisemblance : une fraction de seconde.")])
-c.warn("Seuls les temps du modèle A sont des mesures de l'étude. Le comptage ignore la mémoire, les lots et le matériel : il "
-       "ordonne les coûts, il ne prédit pas les durées.")
+c.read([("Inconnu", "taille de lot non publiée ; coût total non chiffré."),
+        ("Ordre de grandeur", f"arrêt vers 2 000 pas : {c.sci(2000 * K.per_training_example('A', dA), 1)} opérations par unité de taille de lot."),
+        ("GARCH", "six paramètres, maximum de vraisemblance, moins d'une seconde.")])
+c.warn("Seuls les temps du modèle A sont des mesures de l'étude. Le comptage ignore mémoire, lots et matériel.")
 c.foot(f"Rapport : section {c.ref('sec-cout')}, tableau {c.ref('tab-cout')} ; architectures, sections {c.ref('sec-modeleA')} "
        f"et {c.ref('sec-modeleB')} ; campagnes, tableau {c.ref('tab-panels')} ; schémas, section {c.ref('sec-choix_schema')}.")

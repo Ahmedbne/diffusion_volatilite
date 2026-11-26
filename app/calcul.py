@@ -66,11 +66,11 @@ WIDTH_MAX_A = max(C for C in range(8, 200) if width_floor_params(C) <= MODELS["A
 # (measure_draw_costs) : normal ≈ 21, Student ≈ 68, indice entier ≈ 11. On retient 20, 70 et 10.
 DRAW = {"normal": 20, "student": 70, "index": 10}
 REF_OPS_PER_STEP = {
-    "HS": ("tirer un rendement passé au hasard", DRAW["index"]),
+    "HS": ("tirage d'un rendement passé", DRAW["index"]),
     "EWMA-N": ("tirage normal, mise à l'échelle, mise à jour de la variance", DRAW["normal"] + 1 + 4),
     "GARCH-t": ("tirage de Student, racine, mise à l'échelle, récurrence de variance", DRAW["student"] + 2 + 5),
-    "GJR-t": ("idem GARCH-t, plus l'indicatrice de baisse", DRAW["student"] + 2 + 7),
-    "FHS": ("tirer un résidu passé, récurrence GJR", DRAW["index"] + 2 + 7),
+    "GJR-t": ("GARCH-t, plus indicatrice de baisse", DRAW["student"] + 2 + 7),
+    "FHS": ("tirage d'un résidu passé, récurrence GJR", DRAW["index"] + 2 + 7),
 }
 
 

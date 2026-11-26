@@ -5,21 +5,21 @@ import streamlit as st
 
 import core as c
 
-c.hero("10", "IV · Résultats", "Imputation : l'information prime la flexibilité",
-       "Autour d'un trou, trois informations comptent : ce qui le suit, la somme connue d'un segment de prix, les autres marchés du même jour. Chaque méthode est jugée sur ce qu'elle en tire.",
+c.hero("10", "IV · Résultats", "Imputation",
+       "Trois sources d'information : observations postérieures, somme du segment, autres marchés du même jour.",
        f"Rapport, chapitre 10 · tableaux {c.ref('tab-imp_I')}, {c.ref('tab-imp_II')}, {c.ref('tab-prix_II')} ; "
        f"tableau {c.ref('tab-information')}")
-c.clair("Le modèle de diffusion reconstitue-t-il mieux les données manquantes ?",
-        "Il bat l'interpolation de plus d'un quart et les ponts browniens, et égale la loi exacte d'un GJR. Mais c'est l'information utilisée, la somme connue d'un trou et les autres marchés du même jour, qui fait le classement, plus que la méthode.",
-        "Une méthode simple qui exploite la bonne information bat une méthode flexible qui l'ignore. Avant de changer de modèle, il faut lui donner tout ce que l'on sait.")
+c.clair("Reconstitution des données manquantes.",
+        "A réduit le CRPS de l'interpolation de plus d'un quart, bat les ponts browniens et égale la loi exacte d'un GJR.",
+        "Le classement dépend davantage de l'information utilisée que de la flexibilité du modèle.")
 
-c.section(c.lab("sec-imp_I"), "Panel I : des prix manquants sur un indice", "Quatre scénarios, trois indices réunis.")
+c.section(c.lab("sec-imp_I"), "Panel I : prix manquants", "Quatre scénarios, trois indices réunis.")
 ip = c.csv("panel_I/imputation_pooled")
 LAB = {"Linear": "Interpolation", "BB-EWMA": "Pont EWMA", "BB-local": "Pont local", "GJR-t": "Lisseur GJR-t", "Diffusion": "Modèle A"}
 ip["méthode"] = ip.model.map(LAB)
 SCN = {"random-10%": "aléatoire 10 %", "random-30%": "aléatoire 30 %", "block-5": "bloc de 5", "block-20": "bloc de 20"}
-c.figure("empirique", "CRPS des rendements imputés, rapporté au lisseur GJR-t (loi exacte d'un GJR bien spécifié)",
-         "Ligne orange à 1 : aussi bon que le lisseur. L'interpolation, hors cadre, est 36 à 39 % au-dessus.")
+c.figure("empirique", "CRPS relatif au lisseur GJR-t",
+         "1 : performance du lisseur. Interpolation hors cadre (+36 à +39 %).")
 f = go.Figure()
 for m, col in (("BB-EWMA", c.MUTED), ("BB-local", c.INK_2), ("Diffusion", c.BLUE)):
     vals = [ip[(ip.scenario == s) & (ip.model == m)].CRPS.iloc[0] / ip[(ip.scenario == s) & (ip.model == "GJR-t")].CRPS.iloc[0]
@@ -32,7 +32,7 @@ f.update_layout(barmode="group", yaxis_range=[0.97, 1.05], yaxis_title="CRPS / C
 c.plot(f, 340)
 dmi = c.csv("panel_I/dm_imputation")
 piv = dmi[dmi.baseline.isin(["BB-local", "GJR-t"])].pivot_table(index=["index", "scenario"], columns="baseline", values="DM")
-c.figure("empirique", "Diebold-Mariano du modèle A contre le pont local et le lisseur", "Négatif : le modèle A fait mieux.")
+c.figure("empirique", "Diebold-Mariano : A contre pont local et lisseur", "Négatif : A meilleur.")
 pv = dmi[dmi.baseline.isin(["BB-local", "GJR-t"])].copy()
 pv["cell"] = [c.fr(d, 2, True) + ("**" if p_ < 0.05 else "*" if p_ < 0.10 else "") for d, p_ in zip(pv.DM, pv.p)]
 tbl = pv.pivot_table(index=["index", "scenario"], columns="baseline", values="cell", aggfunc="first").reset_index()
@@ -42,12 +42,12 @@ tbl = tbl.sort_values(["index", "scenario"]).rename(columns={"index": "indice", 
                                                             "BB-local": "A − pont local", "GJR-t": "A − lisseur GJR-t"})
 st.dataframe(tbl, hide_index=True, width="stretch", height=36 * (len(tbl) + 1) + 4)
 st.caption("Statistique de Diebold-Mariano, variance de long terme de Newey-West. Étoiles : ** 5 %, * 10 %.")
-c.read([("Loi contre droite", "toutes les méthodes probabilistes battent l'interpolation de plus d'un quart."),
-        ("Modèle A", "bat le pont local de 0,6 à 2,1 % et égale le lisseur GJR-t, loi exacte d'un GJR bien spécifié."),
-        ("Valeur unique", "en erreur absolue, la droite reste la meilleure : personne ne prévoit l'écart d'un chemin à la droite.")])
+c.read([("Interpolation", "les méthodes probabilistes réduisent le CRPS de plus d'un quart."),
+        ("Modèle A", "0,6 à 2,1 % mieux que le pont local ; équivalent au lisseur GJR-t."),
+        ("Erreur ponctuelle", "l'interpolation minimise l'erreur absolue ; l'écart d'un chemin à la droite n'est pas prévisible.")])
 
-c.section(c.lab("sec-imp_II"), "Panel II : des rendements manquants sur huit marchés",
-          "Les autres marchés du même jour sont observés : c'est l'information qui décide.")
+c.section(c.lab("sec-imp_II"), "Panel II : rendements manquants",
+          "Les autres marchés du même jour sont observés.")
 pr = c.scores("imputation_probabiliste_test")["results"]
 NM = {"pont_brownien": "Pont brownien", "ewma_univarie": "EWMA univarié", "lisseur_particulaire": "Lisseur (vol. stochastique)",
       "ewma_multivarie": "EWMA multivarié"}
@@ -64,11 +64,11 @@ for task, lab in (("points", "points isolés"), ("blocks", "blocs de 5 jours")):
     fo.update_layout(xaxis_title="écart de CRPS (négatif : B meilleur)")
     c.plot(fo, 250)
 c.read([("Méthodes univariées", "B les bat toutes."),
-        ("EWMA multivarié", "non distingué de B : même information, simple loi gaussienne conditionnelle."),
-        ("Donc", "l'avantage de B vient de l'information, pas de la diffusion."),
+        ("EWMA multivarié", "écart non établi : même information, loi gaussienne conditionnelle."),
+        ("Interprétation", "l'avantage de B sur les méthodes univariées vient de l'information."),
         ("Couverture à 90 %", "85,3 et 85,1 % pour B, 87,6 et 87,0 % pour l'EWMA multivarié.")])
 
-c.section(c.lab("sec-prix_II"), "Panel II : des prix manquants — une échelle d'information", "")
+c.section(c.lab("sec-prix_II"), "Panel II : prix manquants", "")
 cmp = c.scores("imputation_prix_test_comparaisons")
 res = c.scores("imputation_prix_test")["results"]
 NP = {"knn": ("KNN (valeur unique)", "passé"), "interpolation_log_prix": ("Interpolation du log-prix", "somme"),
@@ -78,16 +78,16 @@ NP = {"knn": ("KNN (valeur unique)", "passé"), "interpolation_log_prix": ("Inte
                                                                                   "même jour + somme")}
 items = [(NP[k][0] + " · " + NP[k][1], res[k]["crps"]) for k in NP if k in res]
 items.sort(key=lambda t: -t[1])
-c.figure("empirique", "CRPS par méthode, avec l'information qu'elle utilise",
-         "Donner la somme à l'EWMA multivarié réduit son CRPS de 14,7 % ; la meilleure méthode combine somme et même jour.")
+c.figure("empirique", "CRPS par méthode et information utilisée",
+         "La somme réduit le CRPS de l'EWMA multivarié de 14,7 %. Meilleur résultat : somme et même jour.")
 fb = go.Figure(go.Bar(y=[i[0] for i in items], x=[i[1] for i in items], orientation="h",
                       marker_color=[c.BLUE if "sous contrainte" in i[0] else c.MUTED for i in items],
                       text=[c.fr(i[1], 4) for i in items], textposition="outside", textfont=dict(color=c.INK_2)))
 fb.update_layout(xaxis_title="CRPS (plus bas = mieux)", xaxis_range=[0, 0.78])
 c.plot(fb, 380)
 
-c.section(c.lab("cor-pont"), "Sur un vrai trou : le pont et la bande exacte",
-          "Choisissez un marché et une date du test ; on cache des prix, puis on tire des ponts à volatilité EWMA.")
+c.section(c.lab("cor-pont"), "Exemple : pont brownien",
+          "Prix masqués sur le test, ponts à volatilité EWMA.")
 df, mu, sd = c.returns_II()
 test = df.loc[c.TEST_START:]
 r1, r2, r3 = st.columns([2, 3, 1.4])
@@ -114,16 +114,16 @@ js_ = np.arange(n + 1)
 mline = js_ * S / n; band = 1.645 * np.sqrt(v * js_ * (n - js_) / n)
 dates = [c.fr_date(d)[:-5] for d in s.index[pos - n: pos + 1]]
 c.figure("empirique", f"{asset} : {m_hidden} prix cachés, log-prix relatif au dernier prix connu (%)",
-         "Orange : les vrais prix cachés ; bleu : 25 ponts tirés et la bande exacte à 90 % du corollaire "
-         + c.ref("cor-pont") + ".")
+         "Orange : prix masqués ; bleu : 25 ponts et bande à 90 % (corollaire "
+         + c.ref("cor-pont") + ").")
 fp = go.Figure()
 fp.add_trace(go.Scatter(x=np.r_[dates, dates[::-1]], y=np.r_[mline + band, (mline - band)[::-1]], fill="toself", mode="lines",
                         fillcolor="rgba(57,135,229,.15)", line=dict(width=0), name="bande exacte à 90 %"))
 for p in range(25):
     fp.add_trace(go.Scatter(x=dates, y=np.r_[0, np.cumsum(Xp[p])], mode="lines", line=dict(color="rgba(57,135,229,.35)", width=.9),
-                            showlegend=p == 0, name="ponts tirés", hoverinfo="skip"))
+                            showlegend=p == 0, name="ponts simulés", hoverinfo="skip"))
 fp.add_trace(go.Scatter(x=dates, y=np.r_[0, np.cumsum(seg)], mode="lines+markers", line=dict(color=c.ORANGE, width=2.4),
-                        marker=dict(size=8), name="vrais prix cachés"))
+                        marker=dict(size=8), name="prix masqués"))
 fp.add_trace(go.Scatter(x=[dates[0], dates[-1]], y=[0, S], mode="markers", marker=dict(color=c.INK, size=12), name="prix connus"))
 fp.update_layout(yaxis_title="100 ln(P / P<sub>a−1</sub>)")
 c.plot(fp, 380)

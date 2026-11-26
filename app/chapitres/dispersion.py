@@ -8,13 +8,13 @@ import streamlit as st
 import core as c
 import theorie as T
 
-c.hero("07", "II · La diffusion", "Biais de dispersion : ce que les schémas font à la loi",
-       "Données N(0, 1), débruiteur exact : chaque pas de chaque schéma est affine en l'état, et la loi de sortie se calcule par récurrence. Choisissez un calendrier, même inventé.",
+c.hero("07", "II · La diffusion", "Biais de dispersion",
+       "Données N(0, 1), débruiteur exact : chaque pas est affine et la variance de sortie se calcule par récurrence.",
        f"Rapport, chapitre 5 · théorème {c.ref('thm-deficit')}, propositions {c.ref('prop-ddim')} et {c.ref('prop-em')}, "
        f"tableaux {c.ref('tab-exact')} et {c.ref('tab-jouet')}")
-c.clair("De combien chaque schéma de génération déforme-t-il le risque ?",
-        "Dans le cas gaussien, on le calcule exactement : la règle d'origine du modèle B perd 5,8 % d'écart-type, DDIM rétrécit toujours, Euler-Maruyama élargit, DPM-Solver++ est fidèle à 20 pas.",
-        "Ces formules prédisent, avant toute donnée, la couverture des intervalles d'un modèle entraîné : un défaut de calibration se calcule à l'avance.")
+c.clair("Déformation de la variance par les schémas.",
+        "Cas gaussien : la règle d'origine (modèle B) perd 5,8 % d'écart-type, DDIM contracte, Euler-Maruyama dilate, DPM-Solver++ est fidèle à 20 pas.",
+        "La couverture d'un modèle entraîné est prévisible avant estimation.")
 
 st.latex(r"\text{Cas de référence : }x_0\sim\mathcal N(0,1),\quad \hat x_0=\sqrt{\bar\alpha_t}\,x,\quad "
          r"\hat\varepsilon=\sqrt{1-\bar\alpha_t}\,x,\quad \hat s=-x")
@@ -39,12 +39,11 @@ else:
 K = len(ab)
 
 # ---------------------------------------------------------------- théorème du déficit
-c.section(c.lab("thm-deficit"), "La règle d'origine perd de la variance : forme fermée", "")
-c.statement(f"Théorème {c.ref('thm-deficit')} (déficit de variance de la règle ancestrale à variance β̃)",
+c.section(c.lab("thm-deficit"), "Déficit de variance de la règle d'origine", "")
+c.statement(f"Théorème {c.ref('thm-deficit')} (règle ancestrale à variance β̃)",
             r"1-v_0=\beta_1+\sum_{k=2}^{K}\frac{(\bar\alpha_{k-1}\beta_k)^2}{1-\bar\alpha_k}"
             r"=\beta_1+\sum_{k=2}^{K}\Delta_k\,r_k,\qquad \Delta_k=\bar\alpha_{k-1}-\bar\alpha_k,\quad r_k=\frac{\Delta_k}{1-\bar\alpha_k}",
-            "Avec la variance β au lieu de β̃, v₀ = 1 − β₁ : la règle est exacte. Le déficit est une moyenne des sauts "
-            "relatifs de bruit r<sub>k</sub>, pondérée par les sauts absolus Δ<sub>k</sub>.")
+            "Avec la variance β, v₀ = 1 − β₁. Le déficit agrège les sauts relatifs r<sub>k</sub>, pondérés par Δ<sub>k</sub>.")
 abk = np.r_[1.0, ab]
 D = abk[:-1] - abk[1:]
 r = np.r_[np.nan, D[1:] / (1 - abk[2:])]
@@ -62,25 +61,24 @@ with t[3]:
     c.tile(c.fr(T.coverage90(math.sqrt(1 - deficit)), 3), "probabilité réelle d'un intervalle annoncé à 90 %",
            "", deficit < 0.02)
 c.figure("analytique", "Contribution de chaque pas au déficit : Δ<sub>k</sub> · r<sub>k</sub>",
-         "À gauche, la contribution de chaque pas ; à droite, leur somme. Les grands pas relatifs aux niveaux où Δ<sub>k</sub> est "
-         "grand coûtent le plus.")
+         "Gauche : contribution par pas. Droite : cumul.")
 kk = np.arange(1, K + 1)
 u1, u2 = st.columns(2)
 with u1:
     f = go.Figure(go.Bar(x=kk, y=contrib, marker_color=c.ORANGE))
-    f.update_layout(title="Contribution du pas k", xaxis_title="niveau k", yaxis_title="Δ<sub>k</sub> · r<sub>k</sub>")
+    f.update_layout(title="Contribution par pas", xaxis_title="niveau k", yaxis_title="Δ<sub>k</sub> · r<sub>k</sub>")
     c.plot(f, 300)
 with u2:
     f = go.Figure(go.Scatter(x=kk, y=np.cumsum(contrib), line=dict(color=c.BLUE, width=2.2), fill="tozeroy",
                              fillcolor="rgba(57,135,229,.12)"))
-    f.update_layout(title="Déficit cumulé depuis le niveau 1", xaxis_title="niveau k", yaxis_title="1 − v (cumul)")
+    f.update_layout(title="Déficit cumulé", xaxis_title="niveau k", yaxis_title="1 − v (cumul)")
     c.plot(f, 300)
 
 # ---------------------------------------------------------------- tous les schémas
-c.section(c.lab("tab-exact"), "Tous les schémas, tous les budgets", "Écart-type exact de la sortie, sans simulation.")
+c.section(c.lab("tab-exact"), "Comparaison des schémas", "Écart-type de sortie exact.")
 ns = sorted({n for n in (3, 5, 7, 10, 15, 20, 30, 50, 75, 100, 150, 200, 300, 500) if n <= K} | {K})
 c.figure("analytique", "Écart-type de sortie selon le nombre d'évaluations",
-         "Sous 1 : la loi est trop étroite, le risque sous-estimé. Au-dessus : trop large.")
+         "Sous 1 : risque sous-estimé ; au-dessus : surestimé.")
 g = go.Figure()
 for s, col, dash in (("ancestral", c.MUTED, "dash"), ("ancestral_large", c.INK_2, "dot"), ("euler_maruyama", c.AQUA, "solid"),
                      ("ddim", c.ORANGE, "solid"), ("dpm2m", c.BLUE, "solid")):
@@ -119,7 +117,7 @@ with rr:
                f"est le plus grand ({c.fr(math.log(ab[gr[1]] / ab[gr[0]]), 2)}), domine.")
 
 # ---------------------------------------------------------------- au-delà du gaussien
-c.section(c.lab("tab-jouet"), "Au-delà du gaussien : la loi jouet à queues épaisses",
+c.section(c.lab("tab-jouet"), "Loi à queues épaisses",
           "Mélange 0,85·N(0 ; 0,6) + 0,15·N(0 ; 3,27), kurtosis 5,72, score exact, 400 000 tirages par configuration.")
 toy = c.js("theorie/jouet_deux_calendriers")["results"]
 rows = []
@@ -130,9 +128,8 @@ for cal, res in toy.items():
                      "écart-type": v["std"], "écart-type gaussien": v["gauss_std"], "kurtosis": v["kurtosis"],
                      "couverture 90 %": v["coverage_90"], "VaR 1 % / vraie": v["q01_ratio"]})
 dft = pd.DataFrame(rows)
-c.figure("numerique", "La théorie gaussienne prédit les biais sur la loi à queues épaisses",
-         "Chaque point est une configuration (calendrier, schéma, budget). Sur la diagonale, la prédiction gaussienne "
-         "serait exacte ; sous la diagonale, les queues épaisses aggravent le défaut.")
+c.figure("numerique", "Biais mesurés et prédiction gaussienne",
+         "Un point par configuration. Diagonale : prédiction exacte ; en dessous : défaut aggravé par les queues épaisses.")
 h = go.Figure()
 for cal, col in (("quad", c.ORANGE), ("cosinus", c.BLUE)):
     d = dft[(dft.calendrier == cal) & (dft["écart-type"] < 2.5)]
@@ -146,7 +143,7 @@ h.update_layout(xaxis_title="écart-type exact, cas gaussien", yaxis_title="éca
 c.plot(h, 400)
 with st.expander("Toutes les configurations"):
     st.dataframe(dft.round(3).sort_values(["calendrier", "schéma", "évaluations"]), hide_index=True, width="stretch")
-c.read([("Calendrier", "la même règle d'origine perd 5,8 % d'écart-type sur le calendrier de B, 1,2 % sur celui de A."),
-        ("Schémas", "DDIM rétrécit toujours ; Euler-Maruyama dilate ; DPM-Solver++(2M) dilate un peu à petit budget, puis devient fidèle."),
-        ("Queues épaisses", "défauts dans le même sens, queue plus touchée : VaR 1 % de la règle d'origine sous-estimée de 10 % (quad)."),
-        ("Conséquence", "le schéma et le nombre de pas sont des paramètres de calibration.")])
+c.read([("Calendrier", "règle d'origine : −5,8 % d'écart-type (calendrier de B), −1,2 % (calendrier de A)."),
+        ("Schémas", "DDIM contracte ; Euler-Maruyama dilate ; DPM-Solver++(2M) dilate légèrement à peu de pas puis converge."),
+        ("Queues épaisses", "mêmes signes, queues plus affectées : VaR 1 % sous-estimée de 10 % (règle d'origine, quad)."),
+        ("Conséquence", "schéma et nombre de pas sont des paramètres de calibration.")])

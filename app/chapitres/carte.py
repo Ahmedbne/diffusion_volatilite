@@ -5,17 +5,14 @@ import streamlit as st
 
 import core as c
 
-c.hero("01", "Méthode", "La carte de l'étude",
-       "Tout le projet sur une page : les données, ce que l'on cache, comment on génère ce qui manque, contre qui on compare, "
-       "comment on juge.",
+c.hero("01", "Méthode", "Protocole",
+       "Données, masques, génération, références et critères.",
        f"Rapport · chapitre 2 (problème), chapitre 6 (modèles), chapitre 7 (critères), chapitre 8 (protocole) · "
        f"tableaux {c.ref('tab-information')}, {c.ref('tab-panels')}, {c.ref('tab-AB')}")
 
-c.clair("Comment passe-t-on de vingt ans de prix de marché à un verdict chiffré sur un modèle de diffusion ?",
-        "En trois temps : on apprend une fois, sur le passé ; on génère des scénarios pour chaque cas du test, sans plus "
-        "rien toucher ; on note ces scénarios, avec les mêmes règles, que ceux des méthodes de référence.",
-        "Un résultat ne vaut que par son protocole. Ici, aucune méthode n'a vu le test, toutes reçoivent la même "
-        "information et produisent le même nombre de scénarios.")
+c.clair("Chaîne complète, des prix à l'évaluation.",
+        "Estimation unique sur le passé, génération de scénarios sur le test, évaluation commune avec les références.",
+        "Mêmes cas, même information et même nombre de scénarios pour toutes les méthodes. Réglages choisis sur la validation.")
 
 # ---------------------------------------------------------------- la carte (SVG)
 INK, INK2, MUTE, RULE, AXIS, ORG, BLU = c.INK, c.INK_2, c.MUTED, c.RULE, c.AXIS, c.ORANGE, c.BLUE
@@ -103,7 +100,7 @@ svg.append(box(xs1[0], y1, bw, h1, "01", "Rendements quotidiens",
 svg.append(box(xs1[1], y1, bw, h1, "02", "Cacher au hasard",
                ["Fenêtre : 64 jours (A), 8 × 65 (B)", "Masque tiré à chaque passage :", "fin de fenêtre, points, blocs,",
                 "prix manquants (somme connue)"], grid_icon(xs1[1] + bw - 64, y1 + 12, lambda i, j: mask_train[i, j])))
-svg.append(box(xs1[2], y1, bw, h1, "03", "L'EDS de bruitage",
+svg.append(box(xs1[2], y1, bw, h1, "03", "Bruitage",
                ["Seules les cases cachées :", "xₖ = √ᾱₖ x₀ + √(1−ᾱₖ) ε", "niveau k tiré au hasard,", "ε ~ N(0, I)"],
                noise_icon(xs1[2] + bw - 64, y1 + 10)))
 svg.append(box(xs1[3], y1, bw, h1, "04", "Le réseau débruite",
@@ -154,23 +151,20 @@ xj = xs2[4] + bw2 + gap2
 wj = W - xj - 1
 svg.append(f'<rect x="{xj}" y="{y2}" width="{wj}" height="{y3 + h3 - y2}" fill="#000" stroke="{INK}" stroke-width="1"/>')
 svg.append(txt(xj + 12, y2 + 20, "12", 10, MUTE, "IBM Plex Mono", ls=1.2))
-svg.append(txt(xj + 12, y2 + 41, "Noter chaque loi", 13.5, INK, weight=500))
+svg.append(txt(xj + 12, y2 + 41, "Évaluation", 13.5, INK, weight=500))
 svg.append(lines(xj + 12, y2 + 64, ["sur ce qui s'est", "vraiment passé :", "", "CRPS · finesse", "couverture 90 %",
                                      "VaR 1 et 5 % :", "  Kupiec, Christoffersen", "energy score", "vol. réalisée", "",
                                      "Écart établi ?", "  Diebold-Mariano (I)", "  bootstrap par blocs (II)"], lh=15.2))
 svg.append(arrow(xs2[4] + bw2, y2 + h2 / 2, xj - 2, y2 + h2 / 2, INK))
 svg.append(arrow(xr + wr, y3 + h3 / 2, xj - 2, y3 + h3 / 2, MUTE))
 svg.append("</svg>")
-c.figure("illustration", "Le parcours d'un cas, de la donnée brute à la note",
-         "Couloir du haut : ce qui est fait une fois. Couloir du milieu : ce qui est fait pour chacun des milliers de cas du "
-         "test. Couloir du bas : les méthodes concurrentes, qui reçoivent les mêmes cas. Toutes aboutissent au même jury. "
-         "Dans les grilles, bleu : observé ; orange : caché.")
+c.figure("illustration", "Chaîne de traitement",
+         "Haut : estimation, une fois. Milieu : génération, pour chaque cas du test. Bas : références, sur les mêmes cas. Bleu : observé ; orange : caché.")
 st.markdown(f'<div style="margin:.6rem 0 1.2rem 0">{"".join(svg)}</div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------- deux tâches
-c.section("Deux tâches", "Prévoir et combler : un seul mécanisme",
-          "La seule différence entre les deux tâches est l'endroit des cases cachées. Le même réseau, entraîné sur des "
-          "milliers de masques tirés au hasard, sert aux deux.")
+c.section("Tâches", "Prévision et imputation",
+          "Même réseau ; seule la position des cases cachées change.")
 
 
 def task_svg(kind: str) -> str:
@@ -206,45 +200,36 @@ def task_svg(kind: str) -> str:
 
 left, right = st.columns(2, gap="large")
 with left:
-    c.figure("illustration", "Prévision", "Quatre marchés sur 22 jours ; les cinq derniers jours sont cachés.")
+    c.figure("illustration", "Prévision", "Quatre marchés, 22 jours, cinq derniers jours cachés.")
     st.markdown(task_svg("prev"), unsafe_allow_html=True)
     c.steps([
-        ("Le contexte", "Le modèle A voit les 54 jours qui précèdent l'origine et une seule statistique du passé lointain "
-         "(la volatilité EWMA à l'entrée de la fenêtre) ; le modèle B, les 60 jours des huit marchés."),
-        ("L'horizon caché", "Les 10 jours suivants (A) ou 5 (B) partent d'un bruit pur."),
-        ("La remontée", "Le réseau débruite ces cases pas à pas, en regardant le contexte, jusqu'à obtenir une trajectoire "
-         "plausible."),
-        ("Une loi, pas un nombre", "On recommence M fois (99 pour A) : la dispersion des trajectoires est l'incertitude "
-         "annoncée. Avec 99 scénarios, la VaR à 1 % est le plus petit des 99 rendements simulés."),
-        ("Le verdict", "Le lendemain, puis dix jours plus tard, on compare cette loi à ce qui s'est réellement passé."),
+        ("Contexte", "A : 54 jours et la volatilité EWMA à l'entrée de la fenêtre. B : 60 jours des huit marchés."),
+        ("Horizon", "10 jours (A) ou 5 (B), initialisés par un bruit gaussien."),
+        ("Débruitage", "Débruitage itératif conditionnel au contexte."),
+        ("Scénarios", "M tirages (99 pour A) décrivent la loi prédictive. La VaR à 1 % est le plus petit des 99."),
+        ("Évaluation", "Comparaison à la réalisation, de 1 à 10 jours."),
     ])
 with right:
-    c.figure("illustration", "Imputation", "Mêmes marchés ; des cases isolées et un trou de prix de cinq jours.")
+    c.figure("illustration", "Imputation", "Mêmes marchés ; cases isolées et un trou de prix de cinq jours.")
     st.markdown(task_svg("imp"), unsafe_allow_html=True)
     c.steps([
-        ("Ce qui manque", "Des rendements isolés, des blocs entiers, ou des prix : places fermées, flux interrompu, "
-         "cotation supprimée."),
-        ("Ce qui reste", "Les jours avant et après le trou, les autres marchés du même jour et, quand c'est un prix qui "
-         "manque, la somme des rendements du trou, fixée par les deux prix qui l'encadrent."),
-        ("La génération", "Exactement comme pour la prévision, mais les cases connues entourent les cibles : le réseau "
-         "regarde des deux côtés."),
-        ("La contrainte", "Chaque scénario est corrigé par la plus petite projection qui rétablit la somme connue "
-         f"(krigeage, lemme {c.ref('lem-krigeage')}). Elle est exacte dans le cas gaussien."),
-        ("Le verdict", "On compare les M complétions aux vraies valeurs cachées, que personne n'a vues."),
+        ("Cibles", "Rendements isolés, blocs ou prix."),
+        ("Information", "Jours avant et après le trou, autres marchés du même jour et, pour un prix manquant, somme des rendements du trou."),
+        ("Génération", "Identique à la prévision, avec une information des deux côtés."),
+        ("Contrainte", f"Projection minimale sur la somme connue (krigeage, lemme {c.ref('lem-krigeage')}), exacte dans le cas gaussien."),
+        ("Évaluation", "Comparaison des M complétions aux valeurs cachées."),
     ])
 
 # ---------------------------------------------------------------- calendrier
-c.section(c.lab("tab-panels"), "Le calendrier des données",
-          "Trois périodes par panel, jamais mélangées. Les poids des réseaux et les six paramètres de chaque GARCH sont "
-          "estimés sur l'apprentissage puis gelés ; les filtres avancent ensuite jour après jour sans rien réestimer.")
+c.section(c.lab("tab-panels"), "Découpage des données",
+          "Poids des réseaux et paramètres GARCH estimés sur l'apprentissage puis gelés. Les filtres avancent sans réestimation.")
 P = [("Panel I · 3 indices", "Apprentissage", "2007-04-03", "2018-12-31"), ("Panel I · 3 indices", "Validation", "2019-01-01", "2020-12-31"),
      ("Panel I · 3 indices", "Test", "2021-01-01", "2026-11-06"),
      ("Panel II · 8 actifs", "Apprentissage", "2010-01-04", "2021-10-01"), ("Panel II · 8 actifs", "Validation", "2022-01-01", "2023-09-30"),
      ("Panel II · 8 actifs", "Test", "2024-01-01", "2026-10-30")]
 COL = {"Apprentissage": "#2c2c2a", "Validation": c.INK_2, "Test": c.BLUE}
 c.figure("illustration", "Apprentissage, validation, test",
-         "La validation du panel I contient le krach de mars 2020 ; celle du panel II, la remontée des taux de 2022. Le test du "
-         "panel II couvre moins de trois ans, sans crise comparable à 2008 ou 2020.")
+         "Validation : krach de mars 2020 (panel I), hausse des taux de 2022 (panel II). Test du panel II : moins de trois ans, sans crise majeure.")
 fg = go.Figure()
 for panel, per, a, b in P:
     d = (pd.Timestamp(b) - pd.Timestamp(a)).days * 86_400_000
@@ -257,9 +242,8 @@ fg.update_layout(barmode="overlay", xaxis_type="date", yaxis=dict(autorange="rev
 c.plot(fg, 190)
 
 # ---------------------------------------------------------------- information
-c.section(c.lab("tab-information"), "Qui voit quoi",
-          "En imputation, une méthode ne vaut que par l'information qu'elle exploite. Ce tableau est la clé de lecture de la "
-          "planche 10 : c'est souvent la colonne, pas la méthode, qui décide du classement.")
+c.section(c.lab("tab-information"), "Information utilisée",
+          "En imputation, le classement dépend fortement de l'information utilisée.")
 info = pd.DataFrame([
     ("Interpolation linéaire", "", "", "", "●", ""),
     ("Pont EWMA", "●", "", "", "●", ""),
@@ -270,51 +254,33 @@ info = pd.DataFrame([
     ("Modèle B · diffusion multivariée", "", "●", "●", "● ᵇ", "●"),
 ], columns=["Méthode", "Passé", "Après le trou", "Même jour", "Somme connue", "Queues épaisses"]).set_index("Méthode")
 st.table(info)
-st.caption("a : la seule volatilité EWMA à l'entrée de la fenêtre. b : seulement par projection a posteriori, variante non "
-           "évaluée dans l'étude. « Même jour » : les autres marchés observés le jour du trou.")
+st.caption("a : volatilité EWMA à l'entrée de la fenêtre uniquement. b : par projection a posteriori, non évaluée. « Même jour » : autres marchés observés le jour du trou.")
 
 # ---------------------------------------------------------------- protocole
-c.section(f"Chapitre {c.ref('ch-protocole')}", "Les règles du jeu",
-          "Une comparaison entre un réseau et des modèles économétriques offre bien des occasions de favoriser un camp "
-          "sans le vouloir. Cinq règles les ferment.")
+c.section(f"Chapitre {c.ref('ch-protocole')}", "Règles de comparaison",
+          "")
 c.steps([
-    ("Une seule estimation", "Tous les paramètres sont estimés sur l'apprentissage puis gelés. Un GJR-t réestimé chaque "
-     "année sert de contrôle de robustesse : son CRPS ne change que de quelques dix-millièmes."),
-    ("Un seul ensemble de réglage", "Toute décision qui pourrait dépendre des résultats est prise sur la validation : arrêt "
-     "de l'apprentissage, schéma et nombre de pas, λ des EWMA, variantes d'architecture."),
-    ("Une lecture du test, avec une réserve", "Les chiffres de prévision et d'imputation n'ont pas été modifiés après la "
-     "lecture du test. En revanche, le choix de mener certaines analyses (loi jointe, certaines références d'imputation) "
-     "a été fait après une première lecture."),
-    ("Même information, même nombre de scénarios", "99 scénarios pour toutes les méthodes du panel I, y compris les GARCH "
-     "dont la loi à un jour est connue exactement : le bruit de Monte-Carlo est le même pour tous."),
-    ("Masques communs", "Les cases cachées sont tirées une fois pour toutes et sont les mêmes pour toutes les méthodes."),
+    ("Estimation", "Paramètres estimés sur l'apprentissage puis gelés. Contrôle : GJR-t réestimé chaque année, CRPS modifié de quelques dix-millièmes."),
+    ("Réglage", "Arrêt, schéma, nombre de pas, λ des EWMA et architecture choisis sur la validation."),
+    ("Usage du test", "Chiffres de prévision et d'imputation inchangés après lecture du test. Certaines analyses (loi jointe, références d'imputation) ont été décidées après une première lecture."),
+    ("Scénarios", "99 par méthode sur le panel I, GARCH compris, pour un bruit Monte-Carlo identique."),
+    ("Masques", "Tirés une fois, communs à toutes les méthodes."),
 ])
 
 # ---------------------------------------------------------------- glossaire
-c.section(f"Annexe {c.ref('ann-glossaire')}", "Comment on juge, en mots simples",
-          "Chaque terme apparaît dans les planches de résultats. « Mieux » est toujours précisé.")
+c.section(f"Annexe {c.ref('ann-glossaire')}", "Critères d'évaluation",
+          "")
 c.glossary([
-    ("Scénario", "une trajectoire simulée", "Un futur ou une complétion possible. Un modèle en produit M = 99 ; leur ensemble "
-     "décrit la loi annoncée."),
-    ("CRPS", "plus bas = mieux", "Distance entre la loi annoncée et la valeur réalisée, dans l'unité des rendements. Il "
-     "récompense à la fois la justesse (être centré au bon endroit) et la finesse (ne pas être trop large). Aucune loi ne "
-     "bat la vraie loi en moyenne."),
-    ("Couverture à 90 %", "proche de 90 % = mieux", "Part des cas où la réalisation tombe dans l'intervalle annoncé à 90 %. "
-     "En dessous, le modèle sous-estime le risque ; au-dessus, il le surestime."),
-    ("VaR à 1 %", "dépassée 1 jour sur 100 = juste", "Perte qui ne devrait être dépassée qu'un jour sur cent. Kupiec teste "
-     "le nombre de dépassements, Christoffersen s'ils arrivent groupés."),
-    ("Diebold-Mariano", "négatif = la diffusion fait mieux", "Écart moyen de score entre deux méthodes, divisé par son "
-     "erreur-type (corrigée de la dépendance entre jours). Au-delà de ±1,96, l'écart est établi à 5 %."),
-    ("Intervalle bootstrap", "ne touche pas 0 = écart établi", "Sur le panel II, on rééchantillonne des mois entiers et les "
-     "trois entraînements : l'intervalle inclut le hasard des données et celui de l'apprentissage."),
-    ("Energy score", "plus bas = mieux", "Le CRPS d'un vecteur : il juge une trajectoire ou une journée de plusieurs marchés "
-     "d'un seul tenant."),
-    ("Volatilité réalisée", "CRPS plus bas = mieux", "On note la loi annoncée de la volatilité des dix jours à venir. Ce "
-     "score juge la façon dont les grands mouvements s'enchaînent dans une trajectoire."),
-    ("Non établi", "≠ égal", "La différence n'est pas démontrée par les données ; cela ne veut jamais dire que les méthodes "
-     "se valent."),
-    ("NFE", "évaluations du réseau", "Nombre de passages dans le réseau pour produire un scénario. Le coût de calcul lui est "
-     "proportionnel ; la fidélité de la loi en dépend aussi (planche 07)."),
+    ("Scénario", "une trajectoire simulée", "Trajectoire simulée (future ou manquante). M = 99 scénarios décrivent la loi prédictive."),
+    ("CRPS", "plus bas = mieux", "Écart entre la loi prédictive et la réalisation, en unités de rendement. Pénalise le biais et la dispersion excessive. Minimal en moyenne pour la vraie loi."),
+    ("Couverture à 90 %", "proche de 90 % = mieux", "Fréquence des réalisations dans l'intervalle à 90 %. En dessous : risque sous-estimé ; au-dessus : surestimé."),
+    ("VaR à 1 %", "dépassée 1 jour sur 100 = juste", "Perte dépassée avec une probabilité de 1 %. Kupiec teste la fréquence des dépassements, Christoffersen leur regroupement."),
+    ("Diebold-Mariano", "négatif = la diffusion fait mieux", "Écart moyen de score rapporté à son erreur-type, corrigée de l'autocorrélation. Significatif à 5 % au-delà de ±1,96."),
+    ("Intervalle bootstrap", "ne touche pas 0 = écart établi", "Panel II : rééchantillonnage par blocs mensuels et par entraînement."),
+    ("Energy score", "plus bas = mieux", "Extension multivariée du CRPS : trajectoire ou coupe de plusieurs marchés."),
+    ("Volatilité réalisée", "CRPS plus bas = mieux", "Volatilité des dix jours à venir ; évalue le regroupement des grandes variations."),
+    ("Non établi", "≠ égal", "Différence non démontrée, ce qui n'implique pas l'équivalence."),
+    ("NFE", "évaluations du réseau", "Nombre d'évaluations par scénario. Détermine le coût et affecte la fidélité (page 07)."),
 ])
 c.foot(f"Rapport : définition {c.ref('def-tache')} (tâche), proposition {c.ref('prop-prix')} (prix manquants), "
        f"section {c.ref('sec-principe')} (principe commun), section {c.ref('sec-inference')} (tests).")

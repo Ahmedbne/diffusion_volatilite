@@ -18,19 +18,19 @@ P = HERE / "chapitres"
 pages = {
     "Étude": [
         st.Page(P / "accueil.py", title="00  Vue d'ensemble", default=True),
-        st.Page(P / "carte.py", title="01  Méthode : la carte de l'étude"),
+        st.Page(P / "carte.py", title="01  Protocole"),
     ],
     "I · Le cadre": [
-        st.Page(P / "probleme.py", title="02  Le problème"),
+        st.Page(P / "probleme.py", title="02  Formulation"),
         st.Page(P / "volatilite.py", title="03  Volatilité : GARCH et GJR"),
     ],
     "II · La diffusion": [
-        st.Page(P / "bruitage.py", title="04  L'EDS de bruitage"),
+        st.Page(P / "bruitage.py", title="04  EDS de bruitage"),
         st.Page(P / "score.py", title="05  Score et Tweedie"),
-        st.Page(P / "remontee.py", title="06  Remonter le temps"),
+        st.Page(P / "remontee.py", title="06  Processus inverse"),
         st.Page(P / "dispersion.py", title="07  Biais de dispersion"),
     ],
-    "III · Juger": [
+    "III · Évaluation": [
         st.Page(P / "evaluation.py", title="08  Règles de score"),
     ],
     "IV · Résultats": [
@@ -41,15 +41,15 @@ pages = {
         st.Page(P / "cout.py", title="13  Coût de calcul"),
     ],
     "V · Synthèse": [
-        st.Page(P / "discussion.py", title="14  Pourquoi A et pas B"),
+        st.Page(P / "discussion.py", title="14  Modèles A et B"),
     ],
 }
 nav = st.navigation(pages, position="sidebar", expanded=True)
 with st.sidebar:
-    st.markdown("<div class='side'>NATURE D'UN RÉSULTAT<br>"
+    st.markdown("<div class='side'>NATURE DES RÉSULTATS<br>"
                 "<b>■ exact</b> · formule démontrée<br>"
                 "<b>◆ simulé</b> · vérité connue<br>"
-                "<b>○ exemple</b> · pour comprendre<br>"
+                "<b>○ exemple</b> · illustratif<br>"
                 "<b>● mesuré</b> · données de marché<br><br>"
                 "École Centrale Casablanca · 2026</div>", unsafe_allow_html=True)
 nav.run()

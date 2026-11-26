@@ -208,12 +208,12 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"]
 """
 
 # nature d'un résultat : un glyphe et un mot, jamais la couleur seule
-BADGES = {"analytique": ("■", "exact", "formule démontrée, aucun aléa"),
-          "numerique": ("◆", "simulé", "simulation où la vérité est connue"),
-          "illustration": ("○", "exemple", "construit pour comprendre, ne prouve rien"),
-          "empirique": ("●", "mesuré", "données de marché, telles que dans le rapport")}
+BADGES = {"analytique": ("■", "exact", "formule démontrée"),
+          "numerique": ("◆", "simulé", "vérité connue"),
+          "illustration": ("○", "exemple", "sans valeur de preuve"),
+          "empirique": ("●", "mesuré", "données de marché, valeurs du rapport")}
 
-STATIONS = [("ov", "Vue d'ensemble"), ("carte", "Méthode"), ("I", "Cadre"), ("II", "Diffusion"), ("III", "Juger"),
+STATIONS = [("ov", "Vue d'ensemble"), ("carte", "Protocole"), ("I", "Cadre"), ("II", "Diffusion"), ("III", "Évaluation"),
             ("IV", "Résultats"), ("V", "Synthèse")]
 
 
@@ -243,10 +243,10 @@ def hero(plate: str, kicker: str, title: str, lead: str, ref: str = "") -> None:
 
 def clair(question: str, answer: str, matters: str) -> None:
     """La couche pour non-spécialistes : la question, la réponse, ce qu'elle change. Sans jargon, sans arrondir."""
-    st.markdown(f'<div class="clair"><span class="tag">EN CLAIR</span><div class="g">'
-                f'<div><div class="k">La question</div><p>{question}</p></div>'
-                f'<div class="ans"><div class="k">Ce qu\'on trouve</div><p>{answer}</p></div>'
-                f'<div><div class="k">Pourquoi ça compte</div><p>{matters}</p></div></div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="clair"><span class="tag">SYNTHÈSE</span><div class="g">'
+                f'<div><div class="k">Objet</div><p>{question}</p></div>'
+                f'<div class="ans"><div class="k">Résultat</div><p>{answer}</p></div>'
+                f'<div><div class="k">Portée</div><p>{matters}</p></div></div></div>', unsafe_allow_html=True)
 
 
 def section(number: str, title: str, lead: str = "") -> None:

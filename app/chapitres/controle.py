@@ -6,23 +6,22 @@ import streamlit as st
 import core as c
 import theorie as T
 
-c.hero("12", "IV · Résultats", "Expériences contrôlées : isoler les mécanismes",
-       'Quatre expériences où un seul facteur varie : le schéma, chaque choix de construction, les faits stylisés, une vérité connue.',
-       f"Rapport, chapitre 12 · figures {c.ref('fig-reseau')} et {c.ref('fig-fidelite')}, tableaux {c.ref('tab-ablation')} "
+c.hero("12", "IV · Résultats", "Expériences contrôlées",
+       "Schéma d'échantillonnage, ablation, faits stylisés, données à loi connue.",
+       f"Rapport, chapitres 12 et 13 · figures {c.ref('fig-reseau')} et {c.ref('fig-fidelite')}, tableaux {c.ref('tab-ablation')} "
        f"et {c.ref('tab-simulation')}")
-c.clair("Qu'est-ce qui fait la performance du modèle A, et combien coûte le fait d'apprendre au lieu de supposer ?",
-        "Prédire la vitesse plutôt que le bruit est décisif : sinon le CRPS double presque. Donner au réseau le niveau de volatilité compte (+1,2 %). Quand les données sont vraiment GARCH, apprendre coûte environ 1 % de CRPS face à l'oracle.",
-        "Ce pour cent éclaire les résultats réels : sur les vrais indices, le modèle A n'est pas derrière les GARCH. Les données contiennent donc une structure que le GARCH ne décrit pas.")
+c.clair("Contribution des choix de construction et coût de l'apprentissage.",
+        "Prédire ε au lieu de v double presque le CRPS. Retirer le niveau de volatilité : +1,2 %. Sur données GARCH, écart à l'oracle d'environ 1 %.",
+        "Sur données réelles, A n'est pas en retrait des GARCH, ce qui suggère une structure qu'ils ne décrivent pas.")
 
-c.section(c.lab("sec-choix_schema"), "Les schémas sur le réseau entraîné du modèle A",
+c.section(c.lab("sec-choix_schema"), "Schémas, réseau du modèle A",
           "Validation du panel I : 75 origines de prévision et 30 fenêtres d'imputation par indice.")
 sv = c.csv("panel_I/sampler_val")
 ref = float(sv[sv.sampler == "ddpm-large"].rel_sd.iloc[0])
 ab = T.cosine_schedule()
 toy = c.js("theorie/jouet_deux_calendriers")["results"]["cosinus"]
-c.figure("empirique", "Écart-type prédictif du réseau, rapporté à la référence (ancestral β, 200 pas)",
-         "Traits pleins : réseau entraîné (empirique). Pointillés : théorie gaussienne exacte (analytique). Tirets : loi "
-         "jouet à score exact (numérique). Le réseau se comporte comme la loi jouet.")
+c.figure("empirique", "Écart-type prédictif relatif (référence : ancestral β, 200 pas)",
+         "Plein : réseau. Pointillés : théorie gaussienne. Tirets : loi jouet à score exact.")
 f = go.Figure()
 for s, lab, col in (("ddim", "DDIM", c.ORANGE), ("dpm2m", "DPM-Solver++(2M)", c.BLUE)):
     d = sv[sv.sampler == s]
@@ -58,12 +57,12 @@ with g2:
                                line=dict(color=col, width=2)))
     h.update_layout(xaxis_type="log", xaxis_title="évaluations", yaxis_title="excès de CRPS (%)", xaxis=dict(tickvals=[5, 10, 20, 50]))
     c.plot(h, 280)
-c.read([("Contraction prédite", "observée : DDIM perd 33, 16, 7 et 2 % d'écart-type à 5, 10, 20 et 50 pas, comme la loi jouet."),
-        ("CRPS", f"la voit à peine : moins de 0,5 % d'écart dès 20 pas (proposition {c.ref('prop-echelle_crps')})."),
-        ("Règle retenue", "choisir le schéma pour sa précision : DPM-Solver++(2M), 20 évaluations.")])
+c.read([("Contraction prédite", "observée : DDIM perd 33, 16, 7 et 2 % d'écart-type à 5, 10, 20 et 50 pas, comme sur la loi jouet."),
+        ("CRPS", f"peu sensible : écart inférieur à 0,5 % dès 20 pas (proposition {c.ref('prop-echelle_crps')})."),
+        ("Choix", "précision numérique : DPM-Solver++(2M), 20 évaluations.")])
 
-c.section(c.lab("sec-ablation"), "Ce que chaque choix apporte : ablation du modèle A",
-          "Une variante par ingrédient retiré, même initialisation aléatoire, même budget, mêmes cas de validation.")
+c.section(c.lab("sec-ablation"), "Ablation du modèle A",
+          "Un composant retiré par variante ; initialisation, budget et cas de validation identiques.")
 abl = c.csv("panel_I/ablation")
 base = abl[abl.variant == "main"].iloc[0]
 NM = {"eps-param": "prédire ε au lieu de v", "no-covariates": "sans covariables de niveau", "no-regularisation":
@@ -74,8 +73,8 @@ rows["Δ imputation (%)"] = 100 * (rows.crps_imp / base.crps_imp - 1)
 rows["variante"] = rows.variant.map(NM)
 show_eps = st.toggle("Inclure la variante ε (+91 %, hors échelle)", value=False)
 rr = rows if show_eps else rows[rows.variant != "eps-param"]
-c.figure("empirique", "Hausse du CRPS quand on retire un ingrédient (validation)",
-         "Statistique t de l'écart apparié au survol ; au-dessous d'environ 1 %, la validation ne permet pas de conclure.")
+c.figure("empirique", "Hausse du CRPS par composant retiré (validation)",
+         "Statistique t appariée au survol. Écarts inférieurs à environ 1 % non détectables.")
 fa = go.Figure()
 for col_, name, colr in (("Δ prévision (%)", "prévision", c.BLUE), ("Δ imputation (%)", "imputation", c.ORANGE)):
     tcol = "t_fc" if "prévision" in col_ else "t_imp"
@@ -83,31 +82,31 @@ for col_, name, colr in (("Δ prévision (%)", "prévision", c.BLUE), ("Δ imput
                         customdata=rr[tcol], hovertemplate="%{y}<br>%{x:+.2f} %<br>t = %{customdata:.1f}<extra></extra>"))
 fa.update_layout(barmode="group", xaxis_title="hausse du CRPS (%)")
 c.plot(fa, 330)
-c.read([("Prédire ε", f"+91 % de CRPS avec un solveur à 20 pas : l'amplification tan θ (proposition {c.ref('prop-rotations')})."),
-        ("Covariables de niveau", "+1,2 % (t = 4,1) : sans elles, le réseau ignore si la volatilité est haute ou basse."),
+c.read([("Prédire ε", f"+91 % de CRPS à 20 pas : amplification tan θ (proposition {c.ref('prop-rotations')})."),
+        ("Covariables de niveau", "+1,2 % (t = 4,1) : information de niveau de volatilité."),
         ("Régularisation", "+1,2 % (t = 2,3)."),
-        ("Normalisation locale, attention", "gains de bon signe, non établis : la validation ne détecte pas d'écart inférieur à environ 1 %.")])
+        ("Normalisation locale, attention", "signe attendu, non significatif (seuil de détection ≈ 1 %).")])
 
-c.section(c.lab("sec-fidelite"), "Le modèle reproduit-il les faits stylisés ?",
-          "Fenêtres de 64 jours générées sans conditionnement, à partir de la seule volatilité initiale.")
+c.section(c.lab("sec-fidelite"), "Faits stylisés",
+          "Génération non conditionnelle de fenêtres de 64 jours à volatilité initiale donnée.")
 fid = c.csv("panel_I/fidelity_table")
 SRC = {"Real (test)": ("données", c.INK), "Diffusion": ("modèle A", c.BLUE), "GARCH-$t$": ("GARCH-t", c.MUTED),
        "GJR-$t$": ("GJR-t", c.ORANGE)}
 stat = st.radio("Statistique", ["Leverage", "Skew.\\ (std.)", "Kurt.\\ (std.)", "ACF $|r|$, lags 1--5"], horizontal=True,
                 format_func={"Leverage": "effet de levier", "Skew.\\ (std.)": "asymétrie", "Kurt.\\ (std.)": "kurtosis",
                              "ACF $|r|$, lags 1--5": "autocorrélation de |r| (retards 1–5)"}.get)
-c.figure("empirique", "Fenêtres réelles du test et fenêtres générées")
+c.figure("empirique", "Données de test et fenêtres générées")
 ff = go.Figure()
 for src, (lab, colr) in SRC.items():
     d = fid[fid.Source == src]
     ff.add_trace(go.Bar(x=d.Index.str.replace("\\&", "&", regex=False), y=d[stat].astype(float), name=lab, marker_color=colr))
 ff.update_layout(barmode="group")
 c.plot(ff, 320)
-c.read([("Effet de levier", "A : −0,10 à −0,11 ; données : −0,09 à −0,12 ; GJR-t en reproduit la moitié, GARCH-t rien."),
-        ("Asymétrie", "bon signe pour A, mauvais pour GJR-t.")])
+c.read([("Effet de levier", "A : −0,10 à −0,11 ; données : −0,09 à −0,12 ; GJR-t : moitié ; GARCH-t : nul."),
+        ("Asymétrie", "signe correct pour A, incorrect pour GJR-t.")])
 
-c.section(c.lab("sec-simulation"), "Une expérience à vérité connue",
-          "Trois séries simulées par un GARCH(1,1)-t connu ; toute l'étude refaite à l'identique ; deux oracles.")
+c.section(c.lab("sec-simulation"), "Données simulées",
+          "Trois séries GARCH(1,1)-t à paramètres connus ; protocole identique ; deux oracles.")
 sf = c.csv("panel_I/synthetic_forecast")
 si = c.csv("panel_I/synthetic_imputation")
 g1, g2 = st.columns(2)
@@ -129,9 +128,9 @@ with g2:
                           text=[c.fr(v, 2, True) for v in gap], textposition="outside", textfont=dict(color=c.INK_2)))
     fi.update_layout(yaxis_title="écart à l'oracle (%)")
     c.plot(fi, 300)
-c.read([("Vérité GARCH", "le GARCH estimé est indiscernable de l'oracle."),
-        ("Prix d'apprentissage", "A paie environ 1 % de CRPS pour ne pas connaître la forme du modèle, 14 % sur la volatilité réalisée."),
-        ("Sur données réelles", "A est à égalité avec les GARCH et devant sur la volatilité réalisée : les données contiennent vraisemblablement une structure que le GARCH ne décrit pas.")])
+c.read([("Données GARCH", "GARCH estimé indiscernable de l'oracle."),
+        ("Coût d'apprentissage", "coût de non-spécification pour A : ≈ 1 % de CRPS, 14 % sur la volatilité réalisée."),
+        ("Sur données réelles", "parité avec les GARCH, avantage sur la volatilité réalisée : structure vraisemblablement non captée par le GARCH.")])
 c.foot(f"Analytique : proposition {c.ref('prop-rotations')}, tableau {c.ref('tab-exact')}. Numérique : loi jouet "
        f"(section {c.ref('sec-jouet')}) et données simulées (tableau {c.ref('tab-simulation')}). Empirique : figure "
        f"{c.ref('fig-reseau')}, tableau {c.ref('tab-ablation')}, figure {c.ref('fig-fidelite')}.")

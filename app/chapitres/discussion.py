@@ -8,17 +8,16 @@ import calcul as K
 import core as c
 import theorie as T
 
-c.hero("14", "V · Synthèse", "Pourquoi le modèle A et pas le modèle B",
-       "Même équation, trois choix de construction différents. Théorie et expériences contrôlées séparent deux défauts : un de calibration, que le schéma explique ; un de finesse, qu'il n'explique pas.",
-       f"Rapport, chapitre 13 · section {c.ref('sec-AB')}, tableau {c.ref('tab-AB')}, théorème {c.ref('thm-deficit')}, "
+c.hero("14", "V · Synthèse", "Comparaison des modèles A et B",
+       "Deux défauts distincts de B : calibration, expliquée par le schéma ; score, non expliqué par lui.",
+       f"Rapport, chapitre 14 · section {c.ref('sec-AB')}, tableau {c.ref('tab-AB')}, théorème {c.ref('thm-deficit')}, "
        f"proposition {c.ref('prop-echelle_crps')}")
-c.clair("Pourquoi le modèle A égale-t-il les GARCH alors que le modèle B fait moins bien ?",
-        "Deux défauts distincts. Le schéma de génération de B rétrécit la loi : cela explique ses intervalles trop courts, pas son score. Son score s'explique plus vraisemblablement par l'absence d'information sur le niveau de volatilité.",
-        "Le premier défaut se corrige sans réentraîner, en changeant de schéma ; le second demande de reconstruire le modèle. Pour B, les deux explications restent des hypothèses.")
+c.clair("Origine de l'écart entre A et B.",
+        "Le schéma de B explique la sous-couverture, pas le score. L'absence d'information de niveau est la cause la plus plausible du second.",
+        "Le premier se corrige sans réentraînement ; le second exige un nouveau modèle. Les deux explications restent des hypothèses pour B.")
 
-c.section(c.lab("sec-AB"), "Ce qui sépare les deux modèles",
-          "Une différence de résultats entre A et B n'est attribuable à aucun facteur pris isolément : ils diffèrent par "
-          "le panel, l'horizon, le réseau et trois choix de construction.")
+c.section(c.lab("sec-AB"), "Différences de construction",
+          "Panel, horizon, réseau et trois choix diffèrent : aucun effet n'est isolé.")
 ab_q, ab_c = T.quad_schedule(), T.cosine_schedule()
 sA, sB = T.gaussian_output_std(ab_c, "dpm2m", 20), T.gaussian_output_std(ab_q, "ddpm", None)
 tab = pd.DataFrame({
@@ -31,18 +30,16 @@ tab = pd.DataFrame({
 }).set_index("")
 st.table(tab)
 
-c.section("DÉFAUT I · CALIBRATION", "Un défaut de calibration, expliqué par le schéma",
-          "Le théorème du déficit chiffre, avant toute donnée, ce que perd la règle d'origine.")
-c.statement(f"Théorème {c.ref('thm-deficit')} — déficit de variance de la règle ancestrale à variance β̃",
+c.section("CALIBRATION", "Effet du schéma",
+          "")
+c.statement(f"Théorème {c.ref('thm-deficit')} (règle ancestrale à variance β̃)",
             r"1-v_0 \;=\; \beta_1 \;+\; \sum_{k\ge 2}\frac{(\bar\alpha_{k-1}\beta_k)^2}{1-\bar\alpha_k}",
-            "Avec un débruiteur exact et des données gaussiennes standard, v₀ est la variance de sortie. Le calendrier quad du "
-            "modèle B donne 1 − v₀ = 0,113, soit un écart-type de 0,942 ; le schéma du modèle A est quasi exact.")
+            "v₀ : variance de sortie (débruiteur exact, données gaussiennes standard). B : 1 − v₀ = 0,113, écart-type 0,942. A : quasi exact.")
 toy = c.js("theorie/jouet_deux_calendriers")["results"]
 g1, g2 = st.columns([3, 2])
 with g1:
-    c.figure("analytique", "Écart-type de sortie des deux schémas, débruiteur exact",
-             "Barres pleines : cas gaussien, formule exacte. Barres hachurées : loi jouet à queues épaisses (kurtosis 5,7), "
-             "estimation Monte-Carlo sur 400 000 tirages — badge numérique pour celles-ci.")
+    c.figure("analytique", "Écart-type de sortie des deux schémas",
+             "Plein : cas gaussien, exact. Hachuré : loi à queues épaisses (kurtosis 5,7), 400 000 tirages.")
     f = go.Figure()
     f.add_trace(go.Bar(x=["Modèle A", "Modèle B"], y=[sA, sB], name="gaussien (analytique)", marker_color=[c.BLUE, c.ORANGE],
                        text=[c.fr(sA, 3), c.fr(sB, 3)], textposition="outside", textfont=dict(color=c.INK_2)))
@@ -58,14 +55,13 @@ with g2:
     c.tile(f"{c.fr(100 * T.coverage90(sB), 1)} %", "couverture à 90 % prédite pour B (analytique)")
     c.tile("86,5 %", "couverture observée de B, panel II (empirique)", "−1,0 à −2,0 points sous les références", False)
     c.tile("87,5 – 88,5 %", "couverture des références, même test (empirique)")
-c.read([("Théorie", "environ deux points de couverture perdus par le schéma de B."),
-        ("Mesure", "B couvre un à deux points de moins que les références, sur le même test."),
-        ("Réserve", "toutes les méthodes sous-couvrent un peu sur ce test : c'est l'écart aux références qu'il faut lire.")])
+c.read([("Théorie", "perte d'environ deux points de couverture."),
+        ("Mesure", "un à deux points sous les références, même test."),
+        ("Réserve", "toutes les méthodes sous-couvrent ; seul l'écart aux références est informatif.")])
 
-c.section("DÉFAUT II · FINESSE", "Un défaut de finesse, que le schéma n'explique pas",
-          f"Le CRPS est plat autour de la bonne échelle (proposition {c.ref('prop-echelle_crps')}) : un schéma qui "
-          "rétrécit la loi de 6 % ne coûte presque rien en score.")
-c.statement(f"Proposition {c.ref('prop-echelle_crps')} — coût d'une erreur d'échelle, cas gaussien",
+c.section("SCORE", "Écart non expliqué par le schéma",
+          f"Le CRPS est plat près de la bonne échelle (proposition {c.ref('prop-echelle_crps')}).")
+c.statement(f"Proposition {c.ref('prop-echelle_crps')} (erreur d'échelle, cas gaussien)",
             r"\frac{\mathbb E\,\mathrm{CRPS}\big(\mathcal N(0,c^2\sigma^2),Y\big)}{\mathbb E\,\mathrm{CRPS}"
             r"\big(\mathcal N(0,\sigma^2),Y\big)} \;=\; \sqrt{2(1+c^2)}-c \;\approx\; 1+\frac{(c-1)^2}{4},"
             r"\qquad Y\sim\mathcal N(0,\sigma^2)")
@@ -73,9 +69,8 @@ gap = 100 * (0.5206 / 0.5158 - 1)
 ratio = lambda x: np.sqrt(2 * (1 + x ** 2)) - x
 c_need = brentq(lambda x: 100 * (ratio(x) - 1) - gap, 0.5, 1.0)
 cc = st.slider("Rapport d'échelle c (prédite / vraie)", 0.70, 1.30, float(round(sB, 3)), 0.005, format="%.3f")
-c.figure("analytique", "Excès de CRPS dû à une erreur d'échelle, comparé à l'écart observé",
-         "Courbe : formule exacte. Ligne horizontale : écart de CRPS mesuré entre le modèle B et GARCH sur le test du "
-         "panel II (empirique). Points : échelles de sortie des deux schémas, cas gaussien.")
+c.figure("analytique", "Coût d'une erreur d'échelle et écart observé",
+         "Courbe : formule exacte. Ligne : écart B − GARCH mesuré. Points : échelles des deux schémas.")
 xs = np.linspace(0.7, 1.3, 241)
 f = go.Figure()
 f.add_trace(go.Scatter(x=xs, y=100 * (ratio(xs) - 1), name="excès de CRPS (analytique)", line=dict(color=c.INK_2, width=2)))
@@ -96,19 +91,15 @@ with k1:
 with k2:
     c.tile(f"{c.fr(100 * (ratio(sB) - 1), 2)} %", "part attribuable au schéma B")
 with k3:
-    c.tile(f"{c.fr(100 * (1 - c_need), 0)} %", "erreur d'échelle qu'il faudrait pour expliquer l'écart")
-c.read([("Pour expliquer l'écart", f"de {c.fr(gap, 2)} % entre B et GARCH, le schéma devrait rétrécir la loi d'environ {c.fr(100 * (1 - c_need), 0)} %."),
-        ("Il la rétrécit", f"de 6 %, ce qui coûte {c.fr(100 * (ratio(sB) - 1), 2)} % de CRPS."),
-        ("Donc", "le défaut de score est ailleurs.")])
+    c.tile(f"{c.fr(100 * (1 - c_need), 0)} %", "erreur d'échelle nécessaire pour expliquer l'écart")
+c.read([("Écart", f"de {c.fr(gap, 2)} % : contraction requise d'environ {c.fr(100 * (1 - c_need), 0)} %."),
+        ("Contraction observée", f"6 %, soit {c.fr(100 * (ratio(sB) - 1), 2)} % de CRPS."),
+        ("Conclusion", "le schéma n'explique pas l'écart.")])
 
-c.section("UNE HYPOTHÈSE", "Où chercher : l'information de niveau",
-          "Le modèle B voit soixante jours réduits par l'écart-type de l'apprentissage, sans savoir si la fenêtre est "
-          "agitée par rapport à la normale de l'actif. Le modèle A, privé de la même information, perd un ordre de "
-          "grandeur comparable.")
-c.figure("empirique", "Ordres de grandeur en regard",
-         "Les deux dernières barres viennent de l'ablation du modèle A sur le panel I : elles mesurent ce que coûte, à un "
-         "autre modèle, l'absence des deux ingrédients qui manquent au modèle B. Leur transposition au modèle B est une "
-         "hypothèse, pas une mesure.")
+c.section("HYPOTHÈSE", "Information de niveau",
+          "B voit 60 jours normalisés globalement, sans niveau relatif de volatilité. L'ablation de A donne un coût du même ordre.")
+c.figure("empirique", "Ordres de grandeur",
+         "Deux dernières barres : ablation de A (panel I). Leur transposition à B est une hypothèse.")
 rows = [("écart observé : B − GARCH (panel II)", gap, c.MAGENTA, "empirique"),
         ("part du schéma B (proposition, cas gaussien)", 100 * (ratio(sB) - 1), c.ORANGE, "analytique"),
         ("A sans covariables de niveau (t = 4,1)", 1.23, c.BLUE, "empirique, autre modèle"),
@@ -119,55 +110,50 @@ f = go.Figure(go.Bar(y=[r[0] for r in rows][::-1], x=[r[1] for r in rows][::-1],
                      hovertemplate="%{y}<br>%{x:.2f} %<br>%{customdata}<extra></extra>"))
 f.update_layout(xaxis_title="hausse du CRPS (%)", xaxis_range=[0, 1.6])
 c.plot(f, 300)
-c.warn("Ces deux explications sont compatibles avec la théorie et avec les expériences disponibles ; pour le modèle B, elles "
-       "restent des hypothèses. Les confirmer demanderait de le reconstruire avec l'échelle par fenêtre et les covariables "
-       "de niveau, puis de le générer avec un schéma fidèle, toutes choses égales par ailleurs.")
+c.warn("Explications compatibles avec la théorie et les expériences, non confirmées pour B. Test requis : B avec échelle par fenêtre, covariables de niveau et schéma fidèle, toutes choses égales par ailleurs.")
 
-c.section("BILAN", "Ce que la diffusion apporte, et à quel prix", "")
+c.section("BILAN", "Apports et coût", "")
 k1, k2, k3, k4 = st.columns(4)
 with k1:
     c.tile("3 à 8 %", "CRPS de la volatilité réalisée sur 10 jours, sous la meilleure référence", "modèle A, panel I", True)
 with k2:
     c.tile("−0,10", "effet de levier des fenêtres générées (données : −0,09 à −0,12 ; GJR-t : −0,05)", "modèle A", True)
 with k3:
-    c.tile("1 réseau", "pour la prévision à tout horizon, l'imputation de points, de blocs ou de prix, la génération")
+    c.tile("1 réseau", "prévision à tout horizon, imputation (points, blocs, prix) et génération")
 with k4:
     c.tile("≈ 4·10⁸", "opérations par scénario du modèle A, contre quelques centaines pour un GARCH", "", False)
-c.read([("Où la diffusion gagne", "l'enchaînement des grandes variations dans une trajectoire, et l'asymétrie que le GJR n'obtient qu'à moitié."),
-        ("Où elle ne gagne pas", "la loi marginale du lendemain, où le GARCH est presque optimal."),
-        ("Comment la juger", f"sur des fonctionnelles de la loi jointe : deux modèles aux mêmes marges ont les mêmes scores marginaux et des VaR de portefeuille opposées (proposition {c.ref('prop-aveugle')}).")])
+c.read([("Gains", "regroupement des grandes variations et asymétrie, que le GJR ne reproduit qu'à moitié."),
+        ("Sans gain", "loi marginale à un jour, où le GARCH est quasi optimal."),
+        ("Évaluation", f"fonctionnelles de la loi jointe : à marges identiques, les VaR de portefeuille peuvent différer fortement (proposition {c.ref('prop-aveugle')}).")])
 
-c.section("MÉTHODE", "Trois enseignements de méthode", "")
+c.section("MÉTHODE", "Enseignements méthodologiques", "")
 m1, m2, m3 = st.columns(3)
 with m1:
-    c.card("i", "Un échantillonneur rapide est biaisé, dans un sens connu",
-           "Pour une application de risque, réduire le nombre de pas peut faire paraître le risque plus faible qu'il "
-           "n'est. Le schéma et son nombre de pas sont des paramètres de calibration, choisis pour leur précision.")
+    c.card("i", "Biais des échantillonneurs",
+           "Réduire le nombre de pas peut sous-estimer le risque. Schéma et nombre de pas se calibrent sur leur précision.")
 with m2:
-    c.card("ii", "Les quantiles d'un ensemble se lisent au rang p(M + 1)",
-           f"La convention usuelle transforme une VaR à 1 % lue sur 100 scénarios en une VaR à 2 % "
-           f"(proposition {c.ref('prop-rangs')}).")
+    c.card("ii", "Quantiles au rang p(M + 1)",
+           f"La convention usuelle transforme une VaR 1 % sur 100 scénarios en VaR 2 % (proposition {c.ref('prop-rangs')}).")
 with m3:
-    c.card("iii", "Une référence mérite autant de soin que la méthode",
-           "Face à la loi conditionnelle exacte du GJR-t, l'avantage apparent du modèle A en imputation disparaît ; face à "
-           "une loi gaussienne qui utilise la même information, le modèle B ne bat pas « les méthodes classiques ».")
+    c.card("iii", "Choix des références",
+           "En imputation, l'avantage de A disparaît face à la loi exacte du GJR-t ; B ne bat pas une loi gaussienne à information égale.")
 
-c.section("§ 13.6", "Limites", "")
+c.section("§ 14.6", "Limites", "")
 st.markdown("""
-- **Deux modèles, deux panels.** A et B ne sont pas évalués sur les mêmes données ; leur comparaison reste qualitative.
-- **La loi jointe du modèle multivarié.** Le modèle B génère les huit actifs conjointement, mais sa loi jointe et ses VaR de
-  portefeuille ne sont pas évaluées ; le scénario des prix manquants du panel II n'est étudié qu'avec les références.
-- **Une période de test par panel.** Les trois indices du panel I partagent les mêmes épisodes ; le test du panel II couvre
-  moins de trois ans, sans crise comparable à 2008 ou 2020.
-- **Peu d'entraînements.** Trois entraînements par réseau : la couverture du modèle B va de 0,83 à 0,90 selon l'entraînement.
-- **Peu de scénarios pour la queue lointaine.** Avec 99 ou 100 scénarios, la VaR à 1 % repose sur le plus petit.
-- **Information limitée aux rendements**, et **trous au hasard** alors qu'un vrai trou peut être informatif.
+- **Panels distincts.** Comparaison A / B qualitative.
+- **Loi jointe de B.** Ni elle ni les VaR de portefeuille ne sont évaluées ; les prix manquants du panel II ne sont étudiés
+  qu'avec les références.
+- **Périodes de test.** Les trois indices du panel I partagent les mêmes épisodes ; le test du panel II couvre moins de trois
+  ans, sans crise comparable à 2008 ou 2020.
+- **Entraînements.** Trois par réseau ; couverture de B de 0,83 à 0,90 selon l'entraînement.
+- **Queue extrême.** Avec 99 ou 100 scénarios, la VaR 1 % repose sur le plus petit.
+- **Données.** Rendements seuls ; trous aléatoires, alors qu'un trou réel peut être informatif.
 """)
 
-c.section("§ 13.7", "Conclusion", "")
-c.read([("Mathématique", "le schéma n'est pas neutre : la règle d'origine perd une variance calculable, DDIM contracte, Euler-Maruyama dilate ; ces formules prédisent la couverture des modèles entraînés."),
-        ("Empirique", "échelle par fenêtre, information de niveau et schéma fidèle : parité avec les meilleurs GARCH sur les marges, avantage sur la trajectoire."),
-        ("Pratique", "pour la loi de demain d'un indice, un GJR-GARCH de Student reste le choix rationnel. La diffusion vaut là où l'on génère une trajectoire ou une coupe transversale, où l'information arrive de plusieurs directions, sans forme paramétrique commode.")],
+c.section("§ 14.7", "Conclusion", "")
+c.read([("Théorie", "la règle d'origine perd une variance calculable, DDIM contracte, Euler-Maruyama dilate ; la couverture est prévisible."),
+        ("Empirique", "avec échelle par fenêtre, information de niveau et schéma fidèle : parité avec les meilleurs GARCH sur les marges, avantage sur la trajectoire."),
+        ("Pratique", "à un jour sur un indice, préférer un GJR-GARCH de Student. La diffusion est pertinente pour des trajectoires ou des coupes transversales, à information multiple et sans forme paramétrique adaptée.")],
        "Conclusion")
 c.foot(f"Analytique : théorème {c.ref('thm-deficit')}, propositions {c.ref('prop-echelle_crps')} et {c.ref('prop-aveugle')}. "
        f"Numérique : loi jouet, section {c.ref('sec-jouet')}. Empirique : tableaux {c.ref('tab-prev_II')}, "

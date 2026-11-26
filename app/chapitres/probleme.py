@@ -5,13 +5,13 @@ import streamlit as st
 
 import core as c
 
-c.hero("02", "I · Le cadre", "Générer ce qui est caché",
-       "Prévoir cache la fin d'une fenêtre de marché, imputer cache des morceaux au milieu : dans les deux cas, on tire les cases cachées selon leur loi sachant les cases connues. Un prix manquant ajoute une contrainte linéaire exacte.",
+c.hero("02", "I · Le cadre", "Formulation du problème",
+       "Prévision et imputation consistent à tirer les cases cachées selon leur loi conditionnelle. Un prix manquant ajoute une contrainte linéaire exacte.",
        f"Rapport, chapitre 2 · définition {c.ref('def-tache')}, proposition {c.ref('prop-prix')}, "
        f"lemme {c.ref('lem-krigeage')}, corollaire {c.ref('cor-pont')}")
-c.clair("Prévoir les jours à venir et reconstituer des prix manquants : faut-il deux outils différents ?",
-        "Non. Dans les deux cas, certaines cases d'un tableau de rendements sont connues, d'autres non, et l'on tire les inconnues selon leur loi sachant les connues. Un prix manquant ajoute une contrainte exacte : la somme des rendements du trou.",
-        "Combler un trou par une droite donne une valeur unique, sans incertitude. Respecter la somme et tirer des chemins donne à la fois le bon prix final et l'incertitude au milieu du trou.")
+c.clair("Prévision et reconstitution de prix manquants.",
+        "Un seul problème : simuler les rendements inconnus conditionnellement aux connus. Un prix manquant fixe la somme des rendements du trou.",
+        "L'interpolation linéaire ne donne aucune incertitude. La simulation sous contrainte en donne une et respecte le prix final.")
 
 st.latex(r"\text{Résoudre }(\mathcal O,\mathcal T,A,s)\;=\;\text{tirer }M\text{ scénarios de }\;"
          r"p\big(x_{\mathcal T}\ \big|\ x_{\mathcal O},\ A\,x_{\mathcal T}=s,\ \mathcal F\big)")
@@ -21,8 +21,7 @@ z = (df - mu) / sd
 test = z.loc["2024-01-01":]
 ends = list(test.index[64::5])
 
-c.section(c.lab("sec-probleme"), "Quatre tâches sur une même fenêtre", "Panel II, huit actifs, 65 jours. Les cases vides par nature "
-          "(marché fermé, lendemain de fermeture) ne sont jamais notées.")
+c.section(c.lab("sec-probleme"), "Tâches", "Panel II : huit actifs, 65 jours. Les cases sans cotation ne sont pas évaluées.")
 a1, a2 = st.columns([3, 2])
 with a1:
     end = st.select_slider("Fin de la fenêtre", options=ends, value=ends[len(ends) // 2], format_func=c.fr_date)
@@ -53,9 +52,8 @@ else:
             seg = slice(t0, t0 + n + 1)  # n prix manquants -> n+1 rendements
             mask[d, seg][obs[d, seg]] = 1
 days = [d.strftime("%d/%m") for d in win.index]
-c.figure("illustration", "Masque de la tâche sur une vraie fenêtre",
-         "Bleu : observé ; orange : cible ; vide : inexistant. Le masque est tiré pour l'illustration ; ceux du test sont "
-         "fixés une fois pour toutes, identiques pour toutes les méthodes.")
+c.figure("illustration", "Masque sur une fenêtre réelle",
+         "Bleu : observé ; orange : cible ; vide : non coté. Masque illustratif ; ceux du test sont fixés et communs à toutes les méthodes.")
 fig = go.Figure(go.Heatmap(z=np.where(mask == 2, np.nan, mask), x=days, y=c.ASSETS_II, zmin=0, zmax=1,
                            colorscale=[[0, "#23466f"], [1, c.ORANGE]], showscale=False, xgap=1, ygap=1,
                            hovertemplate="%{y} · %{x}<extra></extra>"))
@@ -63,12 +61,11 @@ fig.update_yaxes(autorange="reversed"); fig.update_xaxes(nticks=8)
 c.plot(fig, 300)
 st.caption(f"{int((mask == 1).sum())} cibles, {int((mask == 0).sum())} cases observées, {int((mask == 2).sum())} vides.")
 
-c.section(c.lab("sec-prix"), "Un prix manquant impose une somme", "Les prix P<sub>a</sub>, …, P<sub>b</sub> manquent ; P<sub>a−1</sub> et P<sub>b+1</sub> sont observés.")
+c.section(c.lab("sec-prix"), "Contrainte de somme", "Prix P<sub>a</sub>, …, P<sub>b</sub> manquants ; P<sub>a−1</sub> et P<sub>b+1</sub> observés.")
 c.statement(f"Proposition {c.ref('prop-prix')} (prix manquants et rendements contraints)",
             r"\sum_{j=a}^{b+1} r_j \;=\; 100\,\ln\frac{P_{b+1}}{P_{a-1}} \;=:\; S,\qquad"
             r"\{(r_a,\dots,r_{b+1}) : \textstyle\sum_j r_j = S\}\ \text{est un hyperplan de dimension } n-1.",
-            "Réciproquement, tout point de l'hyperplan donne exactement une complétion des prix. Interpoler le log-prix, "
-            "c'est choisir le centre S/n : une valeur unique, sans incertitude.")
+            "Chaque point de l'hyperplan correspond à une unique complétion des prix. L'interpolation du log-prix choisit le centre S/n.")
 b1, b2, b3 = st.columns(3)
 with b1:
     n = st.slider("Rendements du segment n", 2, 8, 5)
@@ -80,9 +77,9 @@ rng = np.random.default_rng(3)
 X = rng.standard_normal((4000, n)) * sig
 Xp = X + (S - X.sum(1, keepdims=True)) / n
 xs = np.arange(n + 1)
-c.figure("analytique", "Le pont brownien discret : tirer librement, puis projeter",
-         f"Lemme {c.ref('lem-krigeage')} avec Σ = σ²I, A = 1ᵀ : x′ = x + (S − Σx)/n suit exactement la loi conditionnelle. "
-         f"Bande : moyenne jS/n ± 1,645·σ·√(j(n−j)/n) (corollaire {c.ref('cor-pont')}).")
+c.figure("analytique", "Pont brownien discret par projection",
+         f"Lemme {c.ref('lem-krigeage')}, Σ = σ²I, A = 1ᵀ : x′ = x + (S − Σx)/n suit la loi conditionnelle. "
+         f"Bande : jS/n ± 1,645·σ·√(j(n−j)/n) (corollaire {c.ref('cor-pont')}).")
 f = go.Figure()
 m = xs * S / n; band = 1.645 * sig * np.sqrt(xs * (n - xs) / n)
 f.add_trace(go.Scatter(x=np.r_[xs, xs[::-1]], y=np.r_[m + band, (m - band)[::-1]], fill="toself", mode="lines",
@@ -104,8 +101,8 @@ with t[1]:
            "σ√(j(n−j)/n)", "bruit Monte-Carlo", None)
 with t[2]:
     c.tile(c.fr(sig * np.sqrt(n / 4), 2) + " %", "écart-type maximal du log-prix, au milieu du trou", "", None)
-c.read([("Aux deux bouts", "incertitude nulle : les prix connus attachent le chemin."),
-        ("Au milieu", "incertitude maximale : écart-type σ√(n/4)."),
-        ("Interpoler", "reste sur l'hyperplan, mais n'annonce aucune incertitude."),
-        ("Ignorer la somme", "sort de l'hyperplan : le prix final est faux."),
-        ("Projeter", "fait les deux, exactement dans le cas gaussien.")])
+c.read([("Extrémités", "variance nulle."),
+        ("Milieu du trou", "écart-type maximal σ√(n/4)."),
+        ("Interpolation", "respecte la somme, sans incertitude."),
+        ("Sans contrainte", "viole le prix final."),
+        ("Projection", "respecte la somme et conserve l'incertitude ; exact dans le cas gaussien.")])

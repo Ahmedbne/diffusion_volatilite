@@ -7,12 +7,12 @@ from scipy.stats import norm
 
 import core as c
 
-c.hero("04", "II · La diffusion", "L'EDS de bruitage, sur une vraie fenêtre",
-       "Une vraie fenêtre de huit marchés est plongée dans l'EDS à variance préservée : le signal s'efface, la variance reste à 1, il ne reste qu'un bruit gaussien. La génération partira de là.",
+c.hero("04", "II · La diffusion", "EDS de bruitage",
+       "EDS à variance préservée appliquée à une fenêtre de huit marchés : le signal disparaît, la variance reste unitaire.",
        f"Rapport, chapitre 4 · proposition {c.ref('prop-vp')}, corollaire {c.ref('cor-chaine')}, figure {c.ref('fig-calendriers')}")
-c.clair("Comment un modèle de diffusion apprend-il à générer des rendements ?",
-        "En apprenant à défaire une destruction. On noie progressivement une vraie fenêtre de marché dans un bruit gaussien, jusqu'à ce qu'il ne reste que du bruit ; générer, c'est parcourir ce chemin à l'envers.",
-        "La destruction suit une équation connue exactement. C'est ce qui rend le chemin retour apprenable, et ce qui permet de calculer les erreurs de la génération.")
+c.clair("Principe d'apprentissage.",
+        "Les données sont progressivement bruitées jusqu'à la loi gaussienne. La génération inverse ce processus.",
+        "Le processus direct est connu exactement, ce qui permet d'apprendre l'inverse et d'en calculer les erreurs.")
 
 df, mu, sd = c.returns()
 z = (df - mu) / sd
@@ -26,7 +26,7 @@ with c1:
     end = st.select_slider("Fin de la fenêtre (test)", options=list(ends), value=ends[len(ends) // 3],
                            format_func=c.fr_date)
 with c2:
-    k = st.slider("Niveau de bruit k", 0, K, K // 4, help="k = 0 : les données ; k = K : bruit pur.")
+    k = st.slider("Niveau de bruit k", 0, K, K // 4, help="k = 0 : données ; k = K : bruit.")
 
 win = z.loc[:end].iloc[-65:]
 x0 = win.to_numpy().T  # (8, 65)
@@ -41,10 +41,10 @@ st.latex(rf"x_{{{k}}}=\underbrace{{{c.fr(np.sqrt(a)).replace(',', '{,}')}}}_{{\s
          + (r"\infty" if k == 0 else c.fr(a / (1 - a), 2).replace(",", "{,}")))
 
 days = [d.strftime("%d/%m") for d in win.index]
-c.figure("empirique", "Une fenêtre du test et sa version bruitée",
-         "Huit actifs, 65 jours, en écarts-types de l'apprentissage ; seule la partie bruitée change avec k.")
-fig = make_subplots(rows=1, cols=2, subplot_titles=("x₀ : la fenêtre réelle (unités de l'apprentissage)",
-                                                    f"x<sub>{k}</sub> : la même fenêtre au niveau {k}"), horizontal_spacing=0.06)
+c.figure("empirique", "Fenêtre de test, avant et après bruitage",
+         "Huit actifs, 65 jours, en écarts-types de l'apprentissage.")
+fig = make_subplots(rows=1, cols=2, subplot_titles=("x₀ : fenêtre observée",
+                                                    f"x<sub>{k}</sub> : niveau {k}"), horizontal_spacing=0.06)
 for j, m in enumerate((x0, xk)):
     fig.add_trace(go.Heatmap(z=np.clip(m, -4, 4), x=days, y=c.ASSETS, colorscale=c.DIVERGING, zmin=-4, zmax=4,
                              showscale=j == 1, colorbar=dict(title="σ", thickness=10, len=0.9),
@@ -55,48 +55,46 @@ fig.update_xaxes(nticks=6)
 for ann in fig.layout.annotations:
     ann.font = dict(size=13, color=c.INK_2)
 c.plot(fig, 330)
-st.caption("Cases vides : rendements inexistants (marché fermé ou lendemain de fermeture). Elles ne sont jamais bruitées "
-           "ni notées. Couleur saturée à ±4 écarts-types.")
+st.caption("Cases vides : sans cotation, ni bruitées ni évaluées. Couleurs tronquées à ±4 écarts-types.")
 
 left, right = st.columns(2)
 with left:
     asset = st.selectbox("Actif suivi", c.ASSETS, index=5)
     i = c.ASSETS.index(asset)
-    c.figure("empirique", "Un actif, trois niveaux de bruit")
+    c.figure("empirique", "Trois niveaux de bruit")
     f2 = go.Figure()
     for kk, col, w in ((0, c.INK, 2.2), (max(k, 1), c.BLUE, 1.6), (K, c.MUTED, 1)):
         aa = 1.0 if kk == 0 else float(ab[kk - 1])
         y = np.sqrt(aa) * x0[i] + np.sqrt(1 - aa) * eps[i]
         f2.add_trace(go.Scatter(x=win.index, y=y, mode="lines", line=dict(color=col, width=w),
                                 name="données" if kk == 0 else f"niveau {kk}", connectgaps=False))
-    f2.update_layout(title=f"{asset} : le chemin se dissout", yaxis_title="rendement (σ de l'apprentissage)")
+    f2.update_layout(title=f"{asset}", yaxis_title="rendement (σ de l'apprentissage)")
     c.plot(f2, 330)
 with right:
     vals = xk[np.isfinite(xk)]
     grid = np.linspace(-5, 5, 300)
-    c.figure("numerique", "La loi des cases converge vers N(0, 1)")
+    c.figure("numerique", "Convergence vers N(0, 1)")
     f3 = go.Figure()
     f3.add_trace(go.Histogram(x=x0[np.isfinite(x0)], histnorm="probability density", nbinsx=50, name="x₀ (données)",
                               marker_color=c.ORANGE, opacity=0.45))
     f3.add_trace(go.Histogram(x=vals, histnorm="probability density", nbinsx=50, name=f"x<sub>{k}</sub>",
                               marker_color=c.BLUE, opacity=0.55))
     f3.add_trace(go.Scatter(x=grid, y=norm.pdf(grid), name="N(0, 1)", line=dict(color=c.INK, width=1.6, dash="dot")))
-    f3.update_layout(barmode="overlay", title="Toutes les cases de la fenêtre : la loi converge vers N(0,1)",
+    f3.update_layout(barmode="overlay", title="Ensemble des cases",
                      xaxis_range=[-5, 5])
     c.plot(f3, 330)
 
 m1, m2, m3 = st.columns(3)
 with m1:
-    c.tile(c.fr(np.nanstd(xk), 3), f"écart-type des cases au niveau {k}", "variance préservée ≈ 1", None)
+    c.tile(c.fr(np.nanstd(xk), 3), f"écart-type des cases au niveau {k}", "cible : 1", None)
 with m2:
     kurt = float(pd.Series(vals).kurt())
-    c.tile(c.fr(kurt, 2), "kurtosis excédentaire (0 pour une gaussienne)", "les queues épaisses s'effacent", None)
+    c.tile(c.fr(kurt, 2), "kurtosis excédentaire (0 pour une gaussienne)", "disparition des queues épaisses", None)
 with m3:
     c.tile(c.sci(np.sqrt(ab[-1]), 1), f"√ᾱ<sub>K</sub> : poids du signal au dernier niveau (K = {K})", "x<sub>K</sub> ≈ bruit pur", None)
 
-c.section(c.lab("cor-chaine"), f"La chaîne discrète est l'EDS continue observée à {K} instants",
-          f"On intègre l'EDS par Euler-Maruyama avec {2000 // K} sous-pas par niveau, depuis le plus gros rendement de la fenêtre, "
-          "et on compare à la loi exacte de la proposition : N(√ᾱ x₀, 1 − ᾱ).")
+c.section(c.lab("cor-chaine"), f"Chaîne discrète : l'EDS à {K} instants",
+          f"Euler-Maruyama, {2000 // K} sous-pas par niveau, depuis le plus grand rendement de la fenêtre ; comparaison à N(√ᾱ x₀, 1 − ᾱ).")
 flat = np.nan_to_num(np.abs(x0), nan=0)
 di, ti = np.unravel_index(np.argmax(flat), flat.shape)
 start = float(x0[di, ti])
@@ -128,19 +126,17 @@ f4.update_layout(title=f"{c.ASSETS[di]} le {win.index[ti]:%d/%m/%Y} : x₀ = {st
                  xaxis_title="niveau k", yaxis_title="valeur")
 err = np.max(np.abs(np.array(sds) - th_s))
 k_half = int((ab > 0.5).sum())
-c.figure("numerique", "Euler-Maruyama de l'EDS continue contre la loi exacte",
-         "Le schéma d'Euler-Maruyama à pas fin redonne la loi de la proposition : la chaîne discrète n'est que l'EDS "
-         "observée aux niveaux de la grille.")
+c.figure("numerique", "Simulation de l'EDS contre loi exacte",
+         "")
 c.plot(f4, 380)
-c.read([("Moyenne et écart-type", f"ceux de la proposition, retrouvés par 4 000 trajectoires (écart maximal {c.fr(err, 3)} sur l'écart-type)."),
-        ("Conséquence", f"la chaîne discrète est l'EDS observée à {K} instants : le même réseau peut servir à d'autres schémas."),
-        ("Signal et bruit", f"le signal domine jusqu'au niveau {k_half} (ᾱ > 1/2), le bruit au-delà.")])
+c.read([("Moyenne et écart-type", f"conformes à la proposition sur 4 000 trajectoires (écart maximal {c.fr(err, 3)} sur l'écart-type)."),
+        ("Conséquence", f"d'autres schémas peuvent utiliser le même réseau aux {K} niveaux."),
+        ("Signal et bruit", f"signal dominant jusqu'au niveau {k_half} (ᾱ > 1/2).")])
 
-c.section(c.lab("fig-calendriers"), "Deux calendriers, deux tailles de pas",
-          "Le modèle A suit le calendrier cosinus à 200 niveaux, le modèle B le calendrier quad à 50 niveaux. La valeur "
-          "finale est négligeable dans les deux cas ; ce qui diffère, c'est le saut relatif de bruit entre deux niveaux.")
+c.section(c.lab("fig-calendriers"), "Calendriers de bruit",
+          "A : cosinus, 200 niveaux. B : quad, 50 niveaux. Les deux atteignent un signal négligeable ; les sauts relatifs diffèrent.")
 c.figure("analytique", "Part du signal et saut relatif de bruit r<sub>k</sub> = (ᾱ<sub>k−1</sub> − ᾱ<sub>k</sub>) / (1 − ᾱ<sub>k</sub>)",
-         f"C'est r<sub>k</sub>, pondéré par le saut absolu Δ<sub>k</sub>, qui fixe la perte de variance de la règle d'origine (théorème "
+         f"r<sub>k</sub>, pondéré par Δ<sub>k</sub>, détermine le déficit de variance de la règle d'origine (théorème "
          f"{c.ref('thm-deficit')}).")
 g1, g2 = st.columns(2)
 fa = go.Figure(); fb = go.Figure()
