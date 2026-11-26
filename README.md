@@ -24,7 +24,7 @@ Ahmed Bounadar · Salma Yousfi · Achraf Ktaib · Yassir Chaoub
 - [Résultats principaux](#résultats-principaux)
 - [Contenu du dépôt](#contenu-du-dépôt)
 - [Lancer le projet sur votre ordinateur](#lancer-le-projet-sur-votre-ordinateur)
-- [Le notebook de A à Z](#le-notebook-de-a-à-z)
+- [Le notebook](#le-notebook)
 - [Le démonstrateur, page par page](#le-démonstrateur-page-par-page)
 - [Données](#données)
 - [Dépannage](#dépannage)
@@ -41,7 +41,7 @@ des jours à venir** (prévision) ou **ceux qui manquent quand des prix font dé
 Ce projet étudie cette idée sur des rendements financiers quotidiens, où le signal est faible, l'échantillon court et le
 concurrent, la famille GARCH, redoutable. Il comprend :
 
-- un **notebook détaillé** qui déroule le projet de A à Z : données, estimation GARCH, EDS de bruitage, vérification des
+- un **notebook détaillé** qui déroule l'étude complète : données, estimation GARCH, EDS de bruitage, vérification des
   théorèmes, règles de score, puis tous les résultats ;
 - un **démonstrateur interactif** Streamlit, où chaque résultat est calculé, simulé ou lu sous vos yeux.
 
@@ -103,12 +103,12 @@ diffusion_volatilite/
 │   ├── requirements.txt        Dépendances Python
 │   └── LISEZMOI.md             Notice courte du démonstrateur
 └── notebooks/
-    ├── diffusion_volatilite_A_a_Z.ipynb   Le projet de A à Z, exécuté (résultats visibles sur GitHub)
+    ├── diffusion_volatilite.ipynb         L'étude complète, exécutée (résultats visibles sur GitHub)
     └── requirements.txt                   Dépendances du notebook
 ```
 
 Pour tout voir sans rien installer : ouvrez
-[notebooks/diffusion_volatilite_A_a_Z.ipynb](notebooks/diffusion_volatilite_A_a_Z.ipynb) directement sur GitHub. Il est
+[notebooks/diffusion_volatilite.ipynb](notebooks/diffusion_volatilite.ipynb) directement sur GitHub. Il est
 enregistré avec ses sorties, figures comprises.
 
 ## Lancer le projet sur votre ordinateur
@@ -178,7 +178,7 @@ n'est nécessaire.
 ### 4a. Ouvrir le notebook
 
 ```bash
-jupyter lab notebooks/diffusion_volatilite_A_a_Z.ipynb
+jupyter lab notebooks/diffusion_volatilite.ipynb
 ```
 
 Puis **Run → Run All Cells**. L'exécution complète prend une à deux minutes sur un ordinateur portable.
@@ -203,13 +203,13 @@ tapez `Ctrl + C`.
 ```bash
 cd diffusion_volatilite
 source .venv/bin/activate      # Windows : .venv\Scripts\Activate.ps1   |   conda : conda activate diffusion
-jupyter lab notebooks/diffusion_volatilite_A_a_Z.ipynb     # le notebook
+jupyter lab notebooks/diffusion_volatilite.ipynb     # le notebook
 cd app && streamlit run app.py                             # ou le démonstrateur
 ```
 
-## Le notebook de A à Z
+## Le notebook
 
-[notebooks/diffusion_volatilite_A_a_Z.ipynb](notebooks/diffusion_volatilite_A_a_Z.ipynb) refait le chemin complet.
+[notebooks/diffusion_volatilite.ipynb](notebooks/diffusion_volatilite.ipynb) refait le chemin complet.
 Chaque étape est **recalculée** quand c'est possible. Sinon, on **relit** les résultats figés des modèles de diffusion
 (leur entraînement demande un GPU et plusieurs heures) et on les **contrôle** de façon indépendante.
 
